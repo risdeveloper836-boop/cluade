@@ -21,7 +21,8 @@
             Columna Ex_Validez:  0 = no tiene entrega
                                  1 = valido (inicio, o dentro de +/- 5 dias)
                                  2 = observado (fuera de +/- 5 dias)
-            Solo las entregas validas (1) cuentan para COMPLETO.
+            Las observadas (2) tambien son entregas validas: cuentan para COMPLETO y
+            el % de avance; el codigo 2 solo marca que fueron fuera de +/- 5 dias.
   Ultimo  : ultimo metodo recibido por la persona hasta la fecha de corte (cualquier metodo).
   Salida  : UNA sola tabla: una fila por persona y metodo, con las entregas en columnas
             (E1 = inicio ... E13). Para cada entrega: fecha programada, fecha real,
@@ -245,8 +246,7 @@ SELECT
     s.id_episodio,
     COUNT(*)                                                 AS n_entregas,
     SUM(s.cantidad)                                          AS unidades,
-    SUM(CASE WHEN s.validez IN ('INICIO','VALIDA') THEN 1 ELSE 0 END)          AS entregas_validas,
-    SUM(CASE WHEN s.validez IN ('INICIO','VALIDA') THEN s.cantidad ELSE 0 END) AS unidades_validas,
+    SUM(CASE WHEN s.val_cod = 2 THEN 1 ELSE 0 END)           AS entregas_observadas,
     MAX(s.fecha)                                             AS fec_ultima,
     MAX(CASE WHEN s.n_entrega = 1 THEN s.fecha END) AS E1_Fecha,
     MAX(CASE WHEN s.n_entrega = 1 THEN s.registro END) AS E1_Registro,
@@ -311,8 +311,7 @@ SELECT
     p.tolerancia,
     r.n_entregas,
     r.unidades,
-    r.entregas_validas,
-    r.unidades_validas,
+    r.entregas_observadas,
     r.fec_ultima,
     CASE WHEN p.dias_x_unidad IS NOT NULL
          THEN DATEADD(DAY, CONVERT(INT, CEILING(u.cantidad * p.dias_x_unidad)), r.fec_ultima)
@@ -357,12 +356,12 @@ IF OBJECT_ID('tempdb..#reporte') IS NOT NULL DROP TABLE #reporte;
 SELECT
     n.*,
     CASE WHEN n.fec_fin_seg <= @fec_corte THEN 'CERRADO (12 meses cumplidos)' ELSE 'ABIERTO' END AS seguimiento,
-    CASE WHEN n.unidades_validas >= n.meta_anual THEN 100 ELSE n.unidades_validas * 100 / n.meta_anual END AS avance_pct,
+    CASE WHEN n.unidades >= n.meta_anual THEN 100 ELSE n.unidades * 100 / n.meta_anual END       AS avance_pct,
     CASE WHEN n.fec_proxima < n.fec_eval THEN DATEDIFF(DAY, n.fec_proxima, n.fec_eval) ELSE 0 END AS dias_atraso,
     CASE
         WHEN n.tipo = 'LARGO'                THEN 'PROTEGIDO - LARGA DURACION'
         WHEN n.tipo = 'DEFINITIVO'           THEN 'PROTEGIDO - DEFINITIVO'
-        WHEN n.unidades_validas >= n.meta_anual THEN 'COMPLETO'
+        WHEN n.unidades >= n.meta_anual      THEN 'COMPLETO'
         WHEN n.fec_eval > DATEADD(DAY, n.tolerancia, n.fec_proxima)
              AND n.metodo_nuevo IS NOT NULL  THEN 'CAMBIO DE METODO'
         WHEN n.fec_eval > DATEADD(DAY, n.tolerancia, n.fec_proxima)
@@ -389,7 +388,7 @@ SELECT
     r.fec_inicio               AS Fecha_inicio,
     r.estado                   AS Estado,
     r.n_entregas               AS Entregas,
-    r.entregas_validas         AS Entregas_validas,
+    r.entregas_observadas      AS Entregas_observadas,
     r.avance_pct               AS Avance_pct,
     r.fec_ultima               AS Ultima_entrega,
     r.fec_proxima              AS Proxima_cita,
