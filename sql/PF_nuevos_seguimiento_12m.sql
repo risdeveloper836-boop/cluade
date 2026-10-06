@@ -12,7 +12,11 @@
             ABANDONO                      (no volvio a tiempo y no cambio de metodo)
             EN SEGUIMIENTO - AL DIA / CITA VENCIDA (aun no cumple los 12 meses)
             INCOMPLETO                    (cerro los 12 meses sin abandono, pero bajo la meta)
-  Salida  : solo el nominal. Compatible con SQL Server 2012 o superior.
+  Validez : cada entrega tiene una fecha programada = entrega anterior + dias que protege lo
+            entregado (trimestral 90 dias, mensual 28, oral 28 por ciclo...). La entrega es
+            VALIDA si se hizo dentro de +/- 5 dias de esa fecha; si no, NO VALIDA (ADELANTADA
+            o TARDIA). Solo las unidades validas cuentan para COMPLETO.
+  Salida  : 1) nominal por persona y metodo  2) nominal de entregas (una fila por entrega). Compatible con SQL Server 2012 o superior.
   Nota    : ejecutar el script COMPLETO (F5), sin seleccionar solo una parte.
 ===========================================================================================*/
 USE BDHIS_MINSA;
@@ -26,6 +30,7 @@ DECLARE @dias_nuevo  INT;
 DECLARE @dias_seg    INT;
 DECLARE @edad_min    INT;
 DECLARE @edad_max    INT;
+DECLARE @tol_valida  INT;
 
 SET @ini_cohorte = '20250101';                 /* primer inicio a considerar             */
 SET @fin_cohorte = '20261231';                 /* ultimo inicio a considerar             */
@@ -34,6 +39,7 @@ SET @dias_nuevo  = 365;                        /* dias sin el metodo para ser NU
 SET @dias_seg    = 365;                        /* duracion del seguimiento               */
 SET @edad_min    = 15;
 SET @edad_max    = 49;
+SET @tol_valida  = 5;                          /* +/- dias para que la entrega sea VALIDA */
 
 /*================================ CATALOGO DE METODOS =================================
   meta_anual    : unidades que dan 1 anio de proteccion (inyectable trimestral = 4 dosis).
@@ -142,24 +148,51 @@ WHERE num_doc IN (
 /*=========================== 3. ENTREGAS DENTRO DE LOS 12 MESES ========================
   mes_seg: mes de seguimiento (1 = primer mes desde el inicio ... 12 = ultimo mes)
 =======================================================================================*/
-IF OBJECT_ID('tempdb..#seg') IS NOT NULL DROP TABLE #seg;
+IF OBJECT_ID('tempdb..#seg0') IS NOT NULL DROP TABLE #seg0;
 SELECT
     i.id_episodio,
     e.fecha,
     e.cantidad,
-    DATEDIFF(DAY, i.fec_inicio, e.fecha) * 12 / @dias_seg + 1 AS mes_seg
-INTO #seg
+    e.renaes,
+    DATEDIFF(DAY, i.fec_inicio, e.fecha) * 12 / @dias_seg + 1                  AS mes_seg,
+    ROW_NUMBER() OVER (PARTITION BY i.id_episodio ORDER BY e.fecha)             AS n_entrega,
+    LAG(e.fecha)    OVER (PARTITION BY i.id_episodio ORDER BY e.fecha)          AS fec_prev,
+    LAG(e.cantidad) OVER (PARTITION BY i.id_episodio ORDER BY e.fecha)          AS cant_prev
+INTO #seg0
 FROM #inicio AS i
 INNER JOIN #entrega AS e
         ON e.num_doc = i.num_doc
        AND e.metodo  = i.metodo
        AND e.fecha BETWEEN i.fec_inicio AND i.fec_fin_seg;
 
+/* Fecha programada y validez de cada entrega (+/- @tol_valida dias) */
+IF OBJECT_ID('tempdb..#seg') IS NOT NULL DROP TABLE #seg;
+SELECT
+    a.*,
+    b.fec_programada,
+    DATEDIFF(DAY, b.fec_programada, a.fecha)                                    AS dif_dias,
+    CASE
+        WHEN a.n_entrega = 1                                          THEN 'INICIO'
+        WHEN b.fec_programada IS NULL                                 THEN 'NO APLICA'
+        WHEN ABS(DATEDIFF(DAY, b.fec_programada, a.fecha)) <= @tol_valida THEN 'VALIDA'
+        WHEN a.fecha < b.fec_programada                               THEN 'NO VALIDA - ADELANTADA'
+        ELSE 'NO VALIDA - TARDIA'
+    END                                                                         AS validez
+INTO #seg
+FROM #seg0 AS a
+INNER JOIN #inicio       AS i ON i.id_episodio = a.id_episodio
+INNER JOIN #metodo_param AS p ON p.metodo = i.metodo
+CROSS APPLY (SELECT CASE WHEN a.fec_prev IS NOT NULL AND p.dias_x_unidad IS NOT NULL
+                         THEN DATEADD(DAY, CONVERT(INT, CEILING(a.cant_prev * p.dias_x_unidad)), a.fec_prev)
+                    END AS fec_programada) AS b;
+
 IF OBJECT_ID('tempdb..#seg_res') IS NOT NULL DROP TABLE #seg_res;
 SELECT
     s.id_episodio,
     COUNT(*)                                                 AS n_entregas,
     SUM(s.cantidad)                                          AS unidades,
+    SUM(CASE WHEN s.validez IN ('INICIO','VALIDA') THEN 1 ELSE 0 END)          AS entregas_validas,
+    SUM(CASE WHEN s.validez IN ('INICIO','VALIDA') THEN s.cantidad ELSE 0 END) AS unidades_validas,
     MAX(s.fecha)                                             AS fec_ultima,
     SUM(CASE WHEN s.mes_seg = 1  THEN s.cantidad ELSE 0 END) AS M01,
     SUM(CASE WHEN s.mes_seg = 2  THEN s.cantidad ELSE 0 END) AS M02,
@@ -186,6 +219,8 @@ SELECT
     p.tolerancia,
     r.n_entregas,
     r.unidades,
+    r.entregas_validas,
+    r.unidades_validas,
     r.fec_ultima,
     CASE WHEN p.dias_x_unidad IS NOT NULL
          THEN DATEADD(DAY, CONVERT(INT, CEILING(u.cantidad * p.dias_x_unidad)), r.fec_ultima)
@@ -194,7 +229,13 @@ SELECT
     c.metodo                                                                    AS metodo_nuevo,
     c.fecha                                                                     AS fec_cambio,
     r.M01, r.M02, r.M03, r.M04, r.M05, r.M06, r.M07, r.M08, r.M09, r.M10, r.M11, r.M12,
-    STUFF((SELECT ', ' + CONVERT(VARCHAR(10), f.fecha, 103)
+    STUFF((SELECT ', ' + CONVERT(VARCHAR(10), f.fecha, 103) + ' ' +
+                  CASE WHEN f.validez = 'INICIO' THEN 'INICIO'
+                       WHEN f.validez = 'VALIDA' THEN 'OK'
+                       WHEN f.validez = 'NO APLICA' THEN '-'
+                       ELSE 'NO VALIDA(' + CASE WHEN f.dif_dias > 0 THEN '+' ELSE '' END
+                            + CONVERT(VARCHAR(5), f.dif_dias) + 'd)'
+                  END
            FROM #seg AS f
            WHERE f.id_episodio = i.id_episodio
            ORDER BY f.fecha
@@ -217,12 +258,12 @@ IF OBJECT_ID('tempdb..#reporte') IS NOT NULL DROP TABLE #reporte;
 SELECT
     n.*,
     CASE WHEN n.fec_fin_seg <= @fec_corte THEN 'CERRADO (12 meses cumplidos)' ELSE 'ABIERTO' END AS seguimiento,
-    CASE WHEN n.unidades >= n.meta_anual THEN 100 ELSE n.unidades * 100 / n.meta_anual END       AS avance_pct,
+    CASE WHEN n.unidades_validas >= n.meta_anual THEN 100 ELSE n.unidades_validas * 100 / n.meta_anual END AS avance_pct,
     CASE WHEN n.fec_proxima < n.fec_eval THEN DATEDIFF(DAY, n.fec_proxima, n.fec_eval) ELSE 0 END AS dias_atraso,
     CASE
         WHEN n.tipo = 'LARGO'                THEN 'PROTEGIDO - LARGA DURACION'
         WHEN n.tipo = 'DEFINITIVO'           THEN 'PROTEGIDO - DEFINITIVO'
-        WHEN n.unidades >= n.meta_anual      THEN 'COMPLETO'
+        WHEN n.unidades_validas >= n.meta_anual THEN 'COMPLETO'
         WHEN n.fec_eval > DATEADD(DAY, n.tolerancia, n.fec_proxima)
              AND n.metodo_nuevo IS NOT NULL  THEN 'CAMBIO DE METODO'
         WHEN n.fec_eval > DATEADD(DAY, n.tolerancia, n.fec_proxima)
@@ -235,7 +276,7 @@ SELECT
 INTO #reporte
 FROM #nominal AS n;
 
-/* NOMINAL (una fila por persona y metodo iniciado) */
+/* NOMINAL 1: una fila por persona y metodo iniciado */
 SELECT
     e.Descripcion_MicroRed     AS MicroRed,
     r.renaes_inicio            AS Renaes,
@@ -250,6 +291,8 @@ SELECT
     r.meta_anual               AS Meta_anual,
     r.n_entregas               AS Entregas,
     r.unidades                 AS Unidades,
+    r.entregas_validas         AS Entregas_validas,
+    r.unidades_validas         AS Unidades_validas,
     r.avance_pct               AS Avance_pct,
     r.fec_ultima               AS Ultima_entrega,
     r.fec_proxima              AS Proxima_cita,
@@ -263,3 +306,24 @@ FROM #reporte AS r
 LEFT JOIN cgsalud2025.dbo.establecimiento AS e
        ON TRY_CONVERT(INT, e.Codigo_Unico) = TRY_CONVERT(INT, r.renaes_inicio)
 ORDER BY r.metodo, r.fec_inicio, r.num_doc;
+
+/* NOMINAL 2: una fila por entrega, con fecha programada y validez */
+SELECT
+    e.Descripcion_MicroRed     AS MicroRed,
+    s.renaes                   AS Renaes_entrega,
+    e.Nombre_Establecimiento   AS Establecimiento,
+    i.num_doc                  AS DNI,
+    i.metodo                   AS Metodo,
+    i.fec_inicio               AS Fecha_inicio,
+    s.n_entrega                AS N_entrega,
+    s.fec_programada           AS Fecha_programada,
+    s.fecha                    AS Fecha_entrega,
+    s.dif_dias                 AS Dif_dias,
+    s.validez                  AS Validez,
+    s.cantidad                 AS Cantidad,
+    s.mes_seg                  AS Mes_seguimiento
+FROM #seg AS s
+INNER JOIN #inicio AS i ON i.id_episodio = s.id_episodio
+LEFT JOIN cgsalud2025.dbo.establecimiento AS e
+       ON TRY_CONVERT(INT, e.Codigo_Unico) = TRY_CONVERT(INT, s.renaes)
+ORDER BY i.metodo, i.num_doc, s.n_entrega;
