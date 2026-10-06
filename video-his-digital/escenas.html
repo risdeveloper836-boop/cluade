@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>HIS Digital — Video promocional</title>
+<style>
+  :root{
+    --teal:#0EA5A4; --teal-d:#0B7C7B; --navy:#0B1B33; --ink:#10233F;
+    --red:#E5484D; --amber:#F5A524; --green:#22C55E; --paper:#FBFAF5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1080px;height:1920px;overflow:hidden;background:#000;font-family:Inter,system-ui,sans-serif}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#000}
+  .scene{position:absolute;inset:0;opacity:0;overflow:hidden}
+  .abs{position:absolute}
+  .cap{position:absolute;left:60px;right:60px;text-align:center;color:#fff;font-weight:800;letter-spacing:-1.5px;line-height:1.08;opacity:0}
+  .tag{position:absolute;left:50%;top:150px;transform:translateX(-50%);padding:14px 34px;border-radius:999px;font-weight:800;font-size:36px;letter-spacing:4px;color:#fff;opacity:0;white-space:nowrap}
+  .hl-red{color:#FF6B6F}
+  .hl-teal{color:#5EEAD4}
+  .person svg{width:100%;height:auto;display:block}
+  .f-happy{display:none}
+  .happy .f-happy{display:inline}
+  .happy .f-tired{display:none}
+
+  /* hoja HIS en papel */
+  .sheet{position:absolute;width:300px;height:400px;background:var(--paper);border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);overflow:hidden}
+  .sheet .hd{height:42px;background:#d9dde3;border-bottom:2px solid #9aa3ad;font:700 15px Inter;color:#34404d;display:flex;align-items:center;justify-content:center;letter-spacing:1px}
+  .sheet .grid{position:absolute;top:42px;left:0;right:0;bottom:0;
+    background:
+      repeating-linear-gradient(to bottom,transparent 0 31px,#b9c2cc 31px 32px),
+      repeating-linear-gradient(to right,transparent 0 59px,#c9d0d8 59px 60px)}
+  .sheet svg{position:absolute;top:42px;left:0}
+
+  /* teléfono */
+  .phone{position:absolute;width:560px;height:1080px;left:260px;top:440px;border-radius:72px;background:#0d1117;padding:22px;box-shadow:0 40px 90px rgba(11,60,80,.35)}
+  .screen{position:relative;width:100%;height:100%;border-radius:52px;background:#F4F8FA;overflow:hidden}
+  .app-hd{height:150px;background:linear-gradient(135deg,var(--teal),#0B6E9C);display:flex;align-items:flex-end;padding:0 34px 24px;gap:14px;color:#fff;font:800 36px Inter}
+  .card{margin:22px 24px 0;background:#fff;border-radius:22px;padding:20px 24px;box-shadow:0 4px 14px rgba(16,35,63,.08)}
+  .lbl{font:600 19px Inter;color:#64748b;text-transform:uppercase;letter-spacing:1.5px}
+  .val{font:700 27px Inter;color:var(--ink);margin-top:6px}
+  .chips{display:flex;flex-wrap:wrap;gap:12px;margin:22px 24px 0}
+  .chip{padding:14px 20px;border-radius:999px;background:#E2EEF2;color:var(--ink);font:700 22px Inter}
+  .chip.on{background:var(--teal);color:#fff}
+  .item{display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid #EDF1F4;font:600 23px Inter;color:var(--ink);opacity:0}
+  .chk{width:36px;height:36px;border-radius:10px;background:var(--green);display:flex;align-items:center;justify-content:center;flex:none}
+  .btn{position:absolute;left:24px;right:24px;bottom:34px;height:92px;border-radius:24px;background:var(--ink);color:#fff;font:800 27px Inter;display:flex;align-items:center;justify-content:center;gap:12px}
+  .tap{position:absolute;width:90px;height:90px;border-radius:50%;border:6px solid rgba(14,165,164,.9);opacity:0}
+
+  .pdf{position:absolute;width:520px;height:700px;background:#fff;border-radius:14px;box-shadow:0 30px 70px rgba(0,0,0,.3);overflow:hidden;opacity:0}
+  .pdf .top{height:80px;background:#E9EEF2;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font:800 24px Inter;color:var(--ink)}
+  .pdf .badge{background:var(--red);color:#fff;font:800 18px Inter;padding:6px 12px;border-radius:8px}
+  .pdf table{width:100%;border-collapse:collapse;font:600 16px Inter;color:#26313d}
+  .pdf td,.pdf th{border:1px solid #cfd6dd;padding:9px 8px;text-align:left}
+  .pdf th{background:#F3F6F8;font-size:14px;color:#5b6876}
+  .stamp{position:absolute;padding:14px 26px;border:7px solid var(--green);color:var(--green);font:900 34px Inter;border-radius:14px;letter-spacing:1px;transform:rotate(-10deg);background:rgba(255,255,255,.85);opacity:0;white-space:nowrap}
+
+  .bcard{position:absolute;width:470px;height:560px;border-radius:36px;background:#fff;box-shadow:0 20px 50px rgba(5,40,60,.25);overflow:hidden;opacity:0}
+  .bcard .ph{height:330px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+  .bcard .ph .person{width:300px;margin-bottom:-90px}
+  .bcard .tx{padding:22px 28px}
+  .bcard .pr{font:800 34px Inter;color:var(--ink);letter-spacing:-.5px}
+  .bcard .bf{font:600 26px Inter;color:#475569;margin-top:8px;line-height:1.25}
+  .pill{position:absolute;height:104px;width:470px;border-radius:30px;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.35);color:#fff;font:800 31px Inter;display:flex;align-items:center;gap:18px;padding:0 28px;opacity:0}
+  .pill .dot{width:46px;height:46px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+
+  .logo{display:flex;align-items:center;gap:28px}
+  .logo .t{font:900 120px Inter;letter-spacing:-4px;color:#fff;line-height:1}
+  .logo .t span{font-weight:500}
+  .cta{position:absolute;left:90px;right:90px;height:170px;border-radius:999px;background:linear-gradient(135deg,#FACC15,#F59E0B);color:#1b1300;font:900 52px Inter;display:flex;align-items:center;justify-content:center;letter-spacing:-1px;box-shadow:0 20px 60px rgba(245,158,11,.45);opacity:0}
+
+  #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+  #vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55) 100%)}
+  #grain{position:absolute;inset:-50%;pointer-events:none;opacity:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- ESCENA 1 · Gancho: 11:47 p.m. -->
+  <section class="scene" id="s1" style="background:linear-gradient(180deg,#070B16 0%,#121A30 60%,#1B1410 100%)">
+    <div class="abs" id="s1-lamp" style="left:-200px;top:-200px;width:1100px;height:1500px;background:radial-gradient(ellipse at 35% 30%,rgba(255,196,110,.30),transparent 60%)"></div>
+    <div class="abs" id="s1-clock" style="left:0;right:0;top:170px;text-align:center;font:800 170px 'DejaVu Sans Mono',monospace;color:#FF4D4F;text-shadow:0 0 40px rgba(255,77,79,.7)">11<span id="s1-colon">:</span><span id="s1-min">47</span><span style="font-size:70px"> PM</span></div>
+    <div class="cap" id="s1-c1" style="top:430px;font-size:66px;color:#cbd5e1">El turno terminó hace horas…</div>
+    <div class="cap" id="s1-c2" style="top:530px;font-size:84px">pero el <span class="hl-red">HIS</span><br>recién empieza.</div>
+    <div class="abs person" id="s1-p" style="left:270px;top:880px;width:540px"></div>
+    <div class="abs" id="s1-papers" style="left:0;top:0;width:1080px;height:1920px"></div>
+    <div class="abs" style="left:-40px;right:-40px;top:1460px;height:520px;background:linear-gradient(180deg,#3b2a1f,#24180f);border-top:8px solid #5a4030"></div>
+    <div class="abs" id="s1-desk" style="left:0;top:0;width:1080px;height:1920px"></div>
+  </section>
+
+  <!-- ESCENA 2 · Enfermería: 40 niños en CRED -->
+  <section class="scene" id="s2" style="background:linear-gradient(180deg,#0E1A2E,#1A2440)">
+    <div class="tag" id="s2-tag" style="background:#2BA3B8">ENFERMERÍA</div>
+    <div class="abs" style="left:0;right:0;top:250px;text-align:center;color:#fff">
+      <div id="s2-num" style="font:900 230px Inter;letter-spacing:-8px;line-height:1">0</div>
+      <div id="s2-sub" style="font:700 60px Inter;color:#cbd5e1;opacity:0">niños en control CRED</div>
+    </div>
+    <div class="abs" id="s2-grid" style="left:110px;top:640px;width:860px;height:500px"></div>
+    <div class="abs person" id="s2-p" style="left:-60px;top:1180px;width:620px"></div>
+    <div class="cap" id="s2-c1" style="left:540px;right:50px;top:1290px;font-size:64px;text-align:left">40 hojas.</div>
+    <div class="cap" id="s2-c2" style="left:540px;right:50px;top:1390px;font-size:52px;text-align:left;color:#cbd5e1">Decenas de códigos<br>que recordar…<br><span class="hl-red">a mano.</span></div>
+  </section>
+
+  <!-- ESCENA 3 · Obstetricia: código olvidado -->
+  <section class="scene" id="s3" style="background:linear-gradient(180deg,#1A1030,#2A1640)">
+    <div class="tag" id="s3-tag" style="background:#8E5BB5">OBSTETRICIA</div>
+    <div class="abs" id="s3-card" style="left:150px;top:270px;width:780px;height:640px;background:var(--paper);border-radius:14px;box-shadow:0 30px 60px rgba(0,0,0,.5);padding:40px 50px;transform:rotate(-3deg)">
+      <div style="font:800 46px Inter;color:#2b2140;border-bottom:3px solid #c8bfd6;padding-bottom:18px">Atención prenatal</div>
+      <div id="s3-rows"></div>
+    </div>
+    <div class="cap" id="s3-c1" style="top:960px;font-size:70px">Un código olvidado…</div>
+    <div class="cap" id="s3-c2" style="top:1050px;font-size:86px">…es <span class="hl-red">producción perdida.</span></div>
+    <div class="abs" id="s3-chart" style="left:70px;top:1330px;width:430px;height:470px;opacity:0">
+      <div style="font:700 34px Inter;color:#d8cfe8;margin-bottom:18px">Meta del mes</div>
+      <div style="position:relative;width:150px;height:360px;background:rgba(255,255,255,.08);border-radius:18px;overflow:hidden">
+        <div id="s3-bar" style="position:absolute;left:0;right:0;bottom:0;height:80%;background:#22C55E;border-radius:18px"></div>
+      </div>
+      <div id="s3-pct" style="position:absolute;left:180px;top:200px;font:900 110px Inter;color:#fff;letter-spacing:-4px">80%</div>
+    </div>
+    <div class="abs person" id="s3-p" style="left:470px;top:1170px;width:640px"></div>
+  </section>
+
+  <!-- ESCENA 4 · Nutrición y Psicología: letra ilegible -->
+  <section class="scene" id="s4" style="background:linear-gradient(180deg,#1E0F14,#2C1219)">
+    <div class="tag" id="s4-tag" style="background:#C2410C">NUTRICIÓN · PSICOLOGÍA</div>
+    <div class="abs" id="s4-sheetwrap" style="left:190px;top:340px;width:700px;height:760px"></div>
+    <div class="abs" id="s4-q" style="left:0;top:0;width:1080px;height:1920px"></div>
+    <div class="cap" id="s4-c1" style="top:1060px;font-size:76px">Letra ilegible.</div>
+    <div class="cap" id="s4-c2" style="top:1150px;font-size:76px">DNI incompletos.</div>
+    <div class="cap" id="s4-c3" style="top:1240px;font-size:62px;color:#fecaca">Y el digitador…<br>tiene que <span class="hl-red">adivinar.</span></div>
+    <div class="abs person" id="s4-p1" style="left:-80px;top:1440px;width:520px"></div>
+    <div class="abs person" id="s4-p2" style="left:640px;top:1440px;width:520px"></div>
+  </section>
+
+  <!-- ESCENA 5 · Giro + revelación de marca -->
+  <section class="scene" id="s5" style="background:#000">
+    <svg class="abs" id="s5-ecg" style="left:0;top:700px" width="1080" height="400" viewBox="0 0 1080 400">
+      <path id="s5-line" d="M0 200 H300 L340 200 L370 90 L410 330 L445 140 L470 200 H620 L650 200 L680 60 L720 350 L755 120 L780 200 H1080" fill="none" stroke="#22D3EE" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 14px #22D3EE)"/>
+    </svg>
+    <div class="cap" id="s5-c1" style="top:480px;font-size:80px">¿Y si el HIS</div>
+    <div class="cap" id="s5-c2" style="top:1150px;font-size:96px">se llenara <span class="hl-teal">en segundos?</span></div>
+    <div class="abs" id="s5-brand" style="inset:0;opacity:0;background:radial-gradient(circle at 50% 40%,#13C2C0 0%,#0B7C9B 55%,#0A3558 100%)">
+      <div class="abs" id="s5-logo" style="left:0;right:0;top:720px;display:flex;justify-content:center"></div>
+      <div class="cap" id="s5-tl" style="top:1020px;font-size:56px;font-weight:600;letter-spacing:-.5px">Tu hoja HIS, lista en segundos.</div>
+    </div>
+  </section>
+
+  <!-- ESCENA 6 · La solución en la app -->
+  <section class="scene" id="s6" style="background:linear-gradient(180deg,#E9F8F7,#D7EEF5)">
+    <div class="abs" style="left:-200px;top:300px;width:700px;height:700px;border-radius:50%;background:rgba(14,165,164,.12)"></div>
+    <div class="abs" style="right:-260px;top:1000px;width:800px;height:800px;border-radius:50%;background:rgba(11,110,156,.10)"></div>
+    <div class="cap" id="s6-c1" style="top:170px;font-size:78px;color:var(--ink)">Elige el kit.</div>
+    <div class="cap" id="s6-c2" style="top:262px;font-size:78px;color:var(--teal-d)">Todo se marca solo.</div>
+    <div class="cap" id="s6-c3" style="top:170px;font-size:72px;color:var(--ink)">Tu hoja HIS en PDF,</div>
+    <div class="cap" id="s6-c4" style="top:258px;font-size:72px;color:var(--teal-d)">lista para imprimir.</div>
+    <div class="abs person happy" id="s6-p1" style="left:-70px;top:1430px;width:430px"></div>
+    <div class="abs person happy" id="s6-p2" style="left:720px;top:1430px;width:430px"></div>
+    <div class="phone" id="s6-phone">
+      <div class="screen">
+        <div class="app-hd"><span id="s6-applogo"></span>HIS Digital</div>
+        <div class="card"><div class="lbl">Paciente</div><div class="val">Paciente demo · Niña · 6 meses</div></div>
+        <div class="chips"><div class="chip" id="s6-kit">Kit CRED</div><div class="chip">Prenatal</div><div class="chip">Plan. familiar</div><div class="chip">Salud mental</div></div>
+        <div class="card" style="padding:10px 24px"><div id="s6-items"></div></div>
+        <div class="btn" id="s6-btn">Generar hoja HIS · PDF</div>
+        <div class="tap" id="s6-tap"></div>
+      </div>
+    </div>
+    <div class="pdf" id="s6-pdf">
+      <div class="top">Hoja HIS · Registro diario <span class="badge">PDF</span></div>
+      <table>
+        <tr><th>Día</th><th>DNI</th><th>Edad</th><th>Diagnóstico / actividad</th><th>Tipo</th></tr>
+        <tr><td>06</td><td>••••••••</td><td>6m</td><td>Control CRED</td><td>D</td></tr>
+        <tr><td></td><td></td><td></td><td>Evaluación del desarrollo</td><td>D</td></tr>
+        <tr><td></td><td></td><td></td><td>Dosaje de hemoglobina</td><td>D</td></tr>
+        <tr><td></td><td></td><td></td><td>Suplementación con hierro</td><td>D</td></tr>
+        <tr><td></td><td></td><td></td><td>Consejería nutricional</td><td>D</td></tr>
+        <tr><td></td><td></td><td></td><td>Vacunas según esquema</td><td>D</td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+      </table>
+    </div>
+    <div class="stamp" id="s6-stamp">LISTO PARA DIGITACIÓN</div>
+  </section>
+
+  <!-- ESCENA 7 · Beneficios por profesional -->
+  <section class="scene" id="s7" style="background:linear-gradient(160deg,#0B7C9B,#0EA5A4 55%,#14B8A6)">
+    <div class="cap" id="s7-c1" style="top:170px;font-size:70px">Hecho para todo<br>tu equipo de salud</div>
+    <div class="bcard" id="s7-b1" style="left:50px;top:420px"><div class="ph" style="background:#DDF3F6"><div class="person happy"></div></div><div class="tx"><div class="pr">Enfermería</div><div class="bf">Kits de CRED y vacunación</div></div></div>
+    <div class="bcard" id="s7-b2" style="left:560px;top:420px"><div class="ph" style="background:#EEE4F7"><div class="person happy"></div></div><div class="tx"><div class="pr">Obstetricia</div><div class="bf">Atención prenatal y planificación familiar</div></div></div>
+    <div class="bcard" id="s7-b3" style="left:50px;top:1010px"><div class="ph" style="background:#E2F5E3"><div class="person happy"></div></div><div class="tx"><div class="pr">Nutrición</div><div class="bf">Anemia, suplementación y consejería</div></div></div>
+    <div class="bcard" id="s7-b4" style="left:560px;top:1010px"><div class="ph" style="background:#FDEBDD"><div class="person happy"></div></div><div class="tx"><div class="pr">Psicología</div><div class="bf">Tamizajes y salud mental</div></div></div>
+    <div class="pill" id="s7-k1" style="left:50px;top:1615px"><span class="dot"></span>Funciona sin internet</div>
+    <div class="pill" id="s7-k2" style="left:560px;top:1615px"><span class="dot"></span>Menos errores</div>
+    <div class="pill" id="s7-k3" style="left:50px;top:1740px"><span class="dot"></span>Más producción</div>
+    <div class="pill" id="s7-k4" style="left:560px;top:1740px"><span class="dot"></span>Hojas legibles</div>
+  </section>
+
+  <!-- ESCENA 8 · Llamada a la acción -->
+  <section class="scene" id="s8" style="background:radial-gradient(circle at 50% 30%,#0E6E8C 0%,#0A2A4A 60%,#071528 100%)">
+    <div class="abs" id="s8-logo" style="left:0;right:0;top:330px;display:flex;justify-content:center;opacity:0"></div>
+    <div class="cap" id="s8-c1" style="top:640px;font-size:92px">Deja el papel atrás.</div>
+    <div class="cap" id="s8-c2" style="top:770px;font-size:58px;font-weight:600;color:#bfe9f0;letter-spacing:-.5px">Registra, aplica el kit e imprime<br>tu hoja HIS en segundos.</div>
+    <div class="cta" id="s8-cta" style="top:1080px">SOLICITA TU DEMO AHORA</div>
+    <div class="cap" id="s8-c3" style="top:1310px;font-size:54px;font-weight:700">Ponte en contacto hoy<br>y llévalo a tu establecimiento.</div>
+    <div class="abs person happy" id="s8-p1" style="left:-40px;top:1560px;width:360px"></div>
+    <div class="abs person happy" id="s8-p2" style="left:230px;top:1600px;width:340px"></div>
+    <div class="abs person happy" id="s8-p3" style="left:500px;top:1600px;width:340px"></div>
+    <div class="abs person happy" id="s8-p4" style="left:760px;top:1560px;width:360px"></div>
+  </section>
+
+  <div id="grain"></div>
+  <div id="vignette"></div>
+  <div id="flash"></div>
+</div>
+
+<script>
+/* ---------- utilidades ---------- */
+const C=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const P=(t,a,b)=>C((t-a)/(b-a));
+const E=x=>1-Math.pow(1-C(x),3);
+const EB=x=>{x=C(x);const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2);};
+const $=id=>document.getElementById(id);
+function tf(el,{x=0,y=0,s=1,r=0,o}={}){el.style.transform=`translate(${x}px,${y}px) scale(${s}) rotate(${r}deg)`;if(o!==undefined)el.style.opacity=o;}
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+/* texto que entra desde abajo y sale con fundido */
+function cap(el,t,a,b,dy=50){const i=E(P(t,a,a+.45)),o=1-P(t,b-.3,b);el.style.opacity=Math.min(i,o);el.style.transform=`translateY(${(1-i)*dy}px)`;}
+function pop(el,t,a,b=1e9,baseT=''){const i=EB(P(t,a,a+.5)),o=1-P(t,b-.3,b);el.style.opacity=Math.min(C(i*1.5),o);el.style.transform=`${baseT} scale(${.6+.4*i})`;}
+
+/* ---------- personajes ---------- */
+const SKIN=['#C68A5E','#B97A50','#D9A07A','#A86B43'];
+function person({skin='#C68A5E',hair='#1F1A17',long=true,uni='#2BA3B8',steth=false,glasses=false,bun=false,coat=false}={}){
+  const hairBack=long?`<path d="M80 170 Q74 86 150 84 Q226 86 220 170 L230 305 Q150 326 70 305 Z" fill="${hair}"/>`:'';
+  const hairFront=long
+    ?`<path d="M82 168 Q86 88 150 88 Q216 88 218 168 Q196 118 150 116 Q110 120 82 168Z" fill="${hair}"/>`
+    :`<path d="M84 168 Q78 86 150 88 Q224 86 216 168 Q208 126 188 120 Q150 108 112 122 Q92 132 84 168Z" fill="${hair}"/>`;
+  const bunEl=bun?`<circle cx="150" cy="80" r="30" fill="${hair}"/>`:'';
+  const coatEl=coat?`<path d="M30 420 Q34 312 120 300 L150 420 Z M270 420 Q266 312 180 300 L150 420Z" fill="#F8FAFC"/>`:'';
+  const st=steth?`<path d="M116 304 Q104 368 150 384 Q196 368 184 304" fill="none" stroke="#3a4552" stroke-width="7"/><circle cx="150" cy="388" r="12" fill="#9aa6b2" stroke="#3a4552" stroke-width="4"/>`:'';
+  const gl=glasses?`<g fill="none" stroke="#2b2b2b" stroke-width="5"><rect x="106" y="158" width="40" height="32" rx="10"/><rect x="154" y="158" width="40" height="32" rx="10"/><path d="M146 172 h8"/></g>`:'';
+  return `<svg viewBox="0 0 300 420" xmlns="http://www.w3.org/2000/svg">
+    ${hairBack}${bunEl}
+    <rect x="128" y="220" width="44" height="90" rx="10" fill="${skin}"/>
+    <path d="M30 420 Q34 312 150 298 Q266 312 270 420 Z" fill="${uni}"/>
+    ${coatEl}
+    <path d="M120 300 L150 348 L180 300 Z" fill="${skin}"/>
+    ${st}
+    <rect x="186" y="352" width="50" height="16" rx="4" fill="#ffffff" opacity=".9"/>
+    <circle cx="86" cy="176" r="13" fill="${skin}"/><circle cx="214" cy="176" r="13" fill="${skin}"/>
+    <ellipse cx="150" cy="170" rx="66" ry="76" fill="${skin}"/>
+    ${hairFront}
+    <path d="M150 176 q-7 18 2 22" fill="none" stroke="#00000030" stroke-width="4" stroke-linecap="round"/>
+    <g class="f-tired" fill="none" stroke-linecap="round">
+      <path d="M112 152 L136 145 M164 145 L188 152" stroke="#2a1d16" stroke-width="5"/>
+      <path d="M115 172 h22 M163 172 h22" stroke="#2a1d16" stroke-width="5"/>
+      <path d="M116 185 q10 7 20 0 M164 185 q10 7 20 0" stroke="#00000045" stroke-width="4"/>
+      <path d="M134 219 q16 -11 32 0" stroke="#5a2a2a" stroke-width="5"/>
+    </g>
+    <g class="f-happy">
+      <path d="M112 148 q12 -9 24 -2 M164 146 q12 -7 24 2" fill="none" stroke="#2a1d16" stroke-width="5" stroke-linecap="round"/>
+      <path d="M115 176 q11 -13 22 0 M163 176 q11 -13 22 0" fill="none" stroke="#2a1d16" stroke-width="5" stroke-linecap="round"/>
+      <path d="M128 204 q22 26 44 0 z" fill="#7a2e2e"/>
+      <path d="M134 205 h32 v5 q-16 6 -32 0z" fill="#fff"/>
+      <circle cx="112" cy="198" r="11" fill="#ff6b6b" opacity=".22"/><circle cx="188" cy="198" r="11" fill="#ff6b6b" opacity=".22"/>
+    </g>
+    ${gl}
+  </svg>`;
+}
+const CAST={
+  enfermero:{skin:SKIN[1],long:false,uni:'#2BA3B8',steth:true},
+  enfermera:{skin:SKIN[0],long:true,bun:true,uni:'#2BA3B8',steth:true},
+  obstetra:{skin:SKIN[2],long:true,uni:'#8E5BB5',hair:'#2a1a12'},
+  nutricionista:{skin:SKIN[3],long:false,uni:'#3FA34D',coat:true},
+  psicologa:{skin:SKIN[0],long:true,uni:'#E07B39',glasses:true,coat:true,hair:'#3a2418'},
+};
+function put(id,who){$(id).innerHTML=person(CAST[who]);}
+put('s1-p','enfermero');put('s2-p','enfermera');put('s3-p','obstetra');
+put('s4-p1','nutricionista');put('s4-p2','psicologa');
+put('s6-p1','enfermera');put('s6-p2','obstetra');
+const bc=document.querySelectorAll('.bcard .person');
+['enfermera','obstetra','nutricionista','psicologa'].forEach((w,i)=>bc[i].innerHTML=person(CAST[w]));
+put('s8-p1','enfermero');put('s8-p2','obstetra');put('s8-p3','psicologa');put('s8-p4','nutricionista');
+
+/* ---------- logo ---------- */
+function logo(size=170){return `<div class="logo"><svg width="${size}" height="${size}" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="26" fill="#fff"/>
+  <path d="M30 18 h28 l16 16 v46 a4 4 0 0 1 -4 4 h-40 a4 4 0 0 1 -4 -4 v-58 a4 4 0 0 1 4 -4z" fill="#0EA5A4"/>
+  <path d="M58 18 v16 h16" fill="#0B7C7B"/>
+  <path d="M36 58 l9 9 l19 -21" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg><div class="t">HIS <span>Digital</span></div></div>`;}
+$('s5-logo').innerHTML=logo();$('s8-logo').innerHTML=logo(150);
+$('s6-applogo').innerHTML=`<svg width="54" height="54" viewBox="0 0 100 100"><rect width="100" height="100" rx="26" fill="#fff"/><path d="M36 52 l10 10 l20 -22" fill="none" stroke="#0EA5A4" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const CHECK=`<svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+document.querySelectorAll('.pill .dot').forEach(d=>d.innerHTML=`<svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="#0B7C9B" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`);
+
+/* ---------- hojas HIS con garabatos ---------- */
+function scribbles(seed,w=300,h=358,rows=10,messy=1){
+  const r=rng(seed);let d='';
+  for(let i=0;i<rows;i++){
+    const y=22+i*32+r()*4;let x=8+r()*10;d+=`M${x.toFixed(1)} ${y.toFixed(1)} `;
+    const end=w-15-r()*90;
+    while(x<end){x+=6+r()*9;d+=`L${x.toFixed(1)} ${(y+(r()-.5)*14*messy).toFixed(1)} `;}
+  }
+  return `<svg width="${w}" height="${h}"><path d="${d}" fill="none" stroke="#1e3a8a" stroke-width="${1.6+messy*.6}" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>`;
+}
+function sheet(seed,messy=1){return `<div class="hd">REGISTRO DIARIO HIS</div><div class="grid"></div>${scribbles(seed,300,358,10,messy)}`;}
+
+/* escena 1: papeles cayendo sobre el escritorio */
+const S1N=16,s1Papers=[];
+for(let i=0;i<S1N;i++){
+  const el=document.createElement('div');el.className='sheet';el.innerHTML=sheet(100+i,1.2);
+  el.style.width='300px';el.style.height='400px';
+  const side=i%2;const r=rng(500+i);
+  s1Papers.push({el,x:side?720+r()*40:60+r()*40,y:1380-Math.floor(i/2)*16,rot:(r()-.5)*14,t0:.3+i*.28});
+  $('s1-desk').appendChild(el);
+}
+/* escena 2: grilla de 40 hojitas */
+const s2Mini=[];
+for(let i=0;i<40;i++){
+  const el=document.createElement('div');el.className='sheet';el.innerHTML=sheet(900+i,1);
+  el.style.left=(i%8)*108+'px';el.style.top=Math.floor(i/8)*100+'px';
+  el.style.transformOrigin='0 0';
+  s2Mini.push(el);$('s2-grid').appendChild(el);
+}
+/* escena 3: lista de chequeo prenatal */
+const S3ROWS=['Control prenatal','Medición de presión arterial','Dosaje de hemoglobina','Suplementación con hierro','Consejería'];
+$('s3-rows').innerHTML=S3ROWS.map((t,i)=>`<div class="s3r" style="position:relative;display:flex;align-items:center;gap:22px;padding:20px 0;border-bottom:2px dashed #ddd3e8;font:600 34px Inter;color:#2b2140;font-style:italic;opacity:0">
+  <span class="bx" style="width:46px;height:46px;border:4px solid #6b5a85;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font:900 34px Inter;color:#1e3a8a;font-style:normal"></span>${t}
+  ${i===3?'<span class="strike" style="position:absolute;left:66px;top:50%;height:6px;width:0;background:#E5484D;border-radius:3px"></span>':''}
+</div>`).join('');
+const s3Rows=[...document.querySelectorAll('.s3r')];
+const s3Stamp=document.createElement('div');s3Stamp.className='stamp';s3Stamp.textContent='OLVIDADO';
+s3Stamp.style.cssText+='border-color:#E5484D;color:#E5484D;font-size:64px;left:440px;top:440px;';
+$('s3-card').appendChild(s3Stamp);
+/* escena 4: hoja grande desordenada */
+$('s4-sheetwrap').innerHTML=`<div class="sheet" id="s4-sheet" style="width:300px;height:400px;transform-origin:0 0">${sheet(4242,2.4)}</div>`;
+const s4Q=[];
+[[90,320,170],[820,420,210],[150,820,150],[760,860,190],[460,230,130]].forEach(([x,y,sz],i)=>{
+  const el=document.createElement('div');el.className='abs';el.textContent='?';
+  el.style.cssText+=`left:${x}px;top:${y}px;font:900 ${sz}px Inter;color:#FF4D4F;text-shadow:0 0 30px rgba(255,77,79,.7);opacity:0`;
+  s4Q.push(el);$('s4-q').appendChild(el);
+});
+/* escena 6: ítems del kit CRED */
+const S6ITEMS=['Control CRED','Evaluación del desarrollo','Dosaje de hemoglobina','Suplementación con hierro','Consejería nutricional','Vacunas según esquema'];
+$('s6-items').innerHTML=S6ITEMS.map(t=>`<div class="item"><span class="chk">${CHECK}</span>${t}</div>`).join('');
+const s6Items=[...document.querySelectorAll('#s6-items .item')];
+
+/* ---------- línea de tiempo (segundos) ---------- */
+const SC=[['s1',0,6],['s2',6,12],['s3',12,18],['s4',18,24.5],['s5',24.5,30.5],['s6',30.5,38.5],['s7',38.5,44.5],['s8',44.5,51]];
+const DURATION=51;
+
+function render(T){
+  for(const [id,a,b] of SC){
+    const el=$(id);const vis=T>=a-.01&&T<b+.4;
+    el.style.display=vis?'block':'none';if(!vis)continue;
+    el.style.opacity=Math.min(P(T,a,a+.35),1-P(T,b,b+.4));
+    const t=T-a;
+    ({s1,s2,s3,s4,s5,s6,s7,s8})[id](t,b-a);
+  }
+  /* destello en los cortes de alto impacto */
+  const fl=Math.max(0,1-Math.abs(T-27.6)/.25)
+    +Math.max(0,1-Math.abs(T-30.5)/.3)*.8
+    +Math.max(0,1-Math.abs(T-44.5)/.3)*.6;
+  $('flash').style.opacity=C(fl);
+  /* grano y viñeta más fuertes en la parte dramática */
+  const drama=T<27.6?1:0;
+  $('grain').style.opacity=drama*.10;
+  $('grain').style.transform=`translate(${(Math.floor(T*24)%7)*13}px,${(Math.floor(T*24)%5)*17}px)`;
+  $('vignette').style.opacity=T<27.6?1:.35;
+}
+
+function s1(t){
+  $('s1-min').textContent=t<4.2?'47':'48';
+  $('s1-colon').style.opacity=(Math.floor(t*2)%2)?.25:1;
+  $('s1-clock').style.opacity=E(P(t,0,.6));
+  $('s1-clock').style.transform=`scale(${1.15-.15*E(P(t,0,1))})`;
+  cap($('s1-c1'),t,.9,6.4);cap($('s1-c2'),t,2.4,6.4);
+  $('s1-lamp').style.opacity=.75+.25*Math.sin(t*23)*Math.sin(t*7);
+  tf($('s1-p'),{y:Math.sin(t*1.6)*6,s:1+.01*Math.sin(t*1.6)});
+  s1Papers.forEach(p=>{const k=EB(P(t,p.t0,p.t0+.45));tf(p.el,{x:p.x,y:p.y-(1-k)*900,r:p.rot*(k),o:C(P(t,p.t0,p.t0+.1))});});
+  /* acercamiento lento de cámara */
+  $('s1').style.transform=`scale(${1+t*.012})`;
+}
+function s2(t){
+  pop($('s2-tag'),t,.1,99,'translateX(-50%)');
+  const n=Math.round(40*E(P(t,.4,2.6)));$('s2-num').textContent=n;
+  $('s2-sub').style.opacity=E(P(t,.7,1.2));
+  s2Mini.forEach((el,i)=>{const k=EB(P(t,.4+i*.05,.4+i*.05+.35));el.style.opacity=C(k*2);el.style.transform=`scale(${.3*k}) rotate(${(i%3-1)*4}deg)`;});
+  tf($('s2-p'),{y:20*(1-E(P(t,0,.8)))+Math.sin(t*1.5)*5});
+  cap($('s2-c1'),t,2.6,6.4);cap($('s2-c2'),t,3.3,6.4);
+  /* temblor leve de la grilla al final */
+  const sh=P(t,4.6,5.8)*6;$('s2-grid').style.transform=`translate(${Math.sin(t*60)*sh}px,${Math.cos(t*47)*sh}px)`;
+}
+function s3(t){
+  pop($('s3-tag'),t,.1,99,'translateX(-50%)');
+  $('s3-card').style.transform=`rotate(-3deg) translateY(${60*(1-E(P(t,0,.6)))}px)`;
+  s3Rows.forEach((r,i)=>{r.style.opacity=E(P(t,.3+i*.25,.6+i*.25));const bx=r.querySelector('.bx');bx.textContent=(i!==3&&t>.6+i*.3)?'✓':'';});
+  const sk=s3Rows[3].querySelector('.strike');sk.style.width=(420*E(P(t,2.2,2.6)))+'px';
+  const st=EB(P(t,2.5,2.9));s3Stamp.style.opacity=C(st*2);s3Stamp.style.transform=`rotate(-12deg) scale(${2.2-1.2*st})`;
+  cap($('s3-c1'),t,3,6.4);cap($('s3-c2'),t,3.6,6.4);
+  $('s3-chart').style.opacity=E(P(t,3.4,3.9));
+  const v=80-28*E(P(t,4,5.4));$('s3-bar').style.height=v+'%';$('s3-pct').textContent=Math.round(v)+'%';
+  $('s3-bar').style.background=v<65?'#E5484D':'#22C55E';$('s3-pct').style.color=v<65?'#FF6B6F':'#fff';
+  tf($('s3-p'),{y:Math.sin(t*1.4)*5});
+}
+function s4(t){
+  pop($('s4-tag'),t,.1,99,'translateX(-50%)');
+  const s=$('s4-sheet');const k=E(P(t,0,1.2));
+  s.style.transform=`translate(${120-60*k}px,${40*(1-k)}px) rotate(${-6+3*Math.sin(t*.8)}deg) scale(${1.9+.25*k})`;
+  s4Q.forEach((q,i)=>{const kk=EB(P(t,.8+i*.35,1.2+i*.35));q.style.opacity=C(kk*2)*(1-P(t,6,6.5));q.style.transform=`scale(${kk}) rotate(${(i%2?1:-1)*12}deg)`;});
+  cap($('s4-c1'),t,.6,1.9);cap($('s4-c2'),t,1.9,3.1);cap($('s4-c3'),t,3.1,6.9);
+  tf($('s4-p1'),{y:30*(1-E(P(t,.2,1)))+Math.sin(t*1.7)*5});
+  tf($('s4-p2'),{y:30*(1-E(P(t,.4,1.2)))+Math.sin(t*1.5+1)*5});
+  const sh=P(t,4.2,6)*10;$('s4').style.transform=`translate(${Math.sin(t*70)*sh}px,${Math.cos(t*53)*sh}px)`;
+}
+function s5(t){
+  const line=$('s5-line');const L=1500;line.style.strokeDasharray=L;line.style.strokeDashoffset=L*(1-E(P(t,.1,2.2)));
+  $('s5-ecg').style.opacity=1-P(t,2.8,3.1);
+  cap($('s5-c1'),t,.6,3.1);cap($('s5-c2'),t,1.4,3.1);
+  $('s5-brand').style.opacity=t>=3.1?1:0;
+  const k=EB(P(t,3.15,3.9));$('s5-logo').style.opacity=C(k*2);$('s5-logo').style.transform=`scale(${.5+.5*k})`;
+  cap($('s5-tl'),t,3.9,7);
+  $('s5-brand').style.transform=`scale(${1+P(t,3.1,6)*.04})`;
+}
+function s6(t){
+  cap($('s6-c1'),t,.2,4.9);cap($('s6-c2'),t,.7,4.9);cap($('s6-c3'),t,5.1,9);cap($('s6-c4'),t,5.4,9);
+  const ph=E(P(t,0,.7));$('s6-phone').style.transform=`translateY(${(1-ph)*500}px)`;
+  /* toque en "Kit CRED" */
+  const kit=$('s6-kit');kit.classList.toggle('on',t>1.5);
+  const tap=$('s6-tap');
+  const tapAt=(t0,x,y)=>{const k=P(t,t0,t0+.5);return k>0&&k<1?{o:1-k,s:.5+k,x,y}:null;};
+  const tp=tapAt(1.3,40,440)||tapAt(4.4,210,890);
+  if(tp){tap.style.opacity=tp.o;tap.style.left=tp.x+'px';tap.style.top=tp.y+'px';tap.style.transform=`scale(${tp.s})`;}else tap.style.opacity=0;
+  s6Items.forEach((it,i)=>{const k=E(P(t,1.8+i*.32,2.1+i*.32));it.style.opacity=k;it.style.transform=`translateX(${(1-k)*40}px)`;});
+  $('s6-btn').style.background=t>4.4&&t<4.9?'#0EA5A4':'var(--ink)';
+  /* sale el PDF */
+  const pd=E(P(t,4.8,5.6));const pdf=$('s6-pdf');
+  pdf.style.opacity=C(pd*2);pdf.style.left=(280+(1-pd)*0)+'px';pdf.style.top=(1100-560*pd)+'px';
+  pdf.style.transform=`scale(${.4+.6*pd}) rotate(${-4*pd}deg)`;
+  $('s6-phone').style.filter=`blur(${pd*4}px)`;$('s6-phone').style.opacity=1-pd*.35;
+  const st=EB(P(t,5.9,6.3));const stamp=$('s6-stamp');stamp.style.opacity=C(st*2);stamp.style.left='300px';stamp.style.top='1140px';stamp.style.transform=`rotate(-10deg) scale(${2-st})`;
+  tf($('s6-p1'),{y:40*(1-E(P(t,.3,1.1)))+Math.sin(t*2)*6});
+  tf($('s6-p2'),{y:40*(1-E(P(t,.5,1.3)))+Math.sin(t*2+1)*6});
+}
+function s7(t){
+  cap($('s7-c1'),t,.1,7);
+  ['s7-b1','s7-b2','s7-b3','s7-b4'].forEach((id,i)=>pop($(id),t,.5+i*.3));
+  ['s7-k1','s7-k2','s7-k3','s7-k4'].forEach((id,i)=>{const el=$(id);const k=E(P(t,2.6+i*.3,3+i*.3));el.style.opacity=k;el.style.transform=`translateY(${(1-k)*40}px)`;});
+}
+function s8(t){
+  const k=EB(P(t,.1,.7));$('s8-logo').style.opacity=C(k*2);$('s8-logo').style.transform=`scale(${.6+.4*k})`;
+  cap($('s8-c1'),t,.5,99);cap($('s8-c2'),t,1.1,99);
+  const c=$('s8-cta');const ck=EB(P(t,1.8,2.4));c.style.opacity=C(ck*2);
+  c.style.transform=`scale(${(.6+.4*ck)*(1+.04*Math.sin(Math.max(0,t-2.4)*6))})`;
+  cap($('s8-c3'),t,2.6,99);
+  ['s8-p1','s8-p2','s8-p3','s8-p4'].forEach((id,i)=>tf($(id),{y:200*(1-E(P(t,3+i*.15,3.6+i*.15)))+Math.sin(t*2+i)*5}));
+}
+
+window.render=render;window.DURATION=DURATION;
+/* vista previa en navegador: ?t=12 congela un instante; sin parámetro reproduce */
+const q=new URLSearchParams(location.search);
+if(q.has('t'))render(+q.get('t'));
+else if(!q.has('static')){const st=performance.now();(function loop(){const T=((performance.now()-st)/1000)%DURATION;render(T);requestAnimationFrame(loop);})();}
+</script>
+</body>
+</html>
