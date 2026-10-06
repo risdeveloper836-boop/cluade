@@ -50,6 +50,11 @@ button:disabled{cursor:not-allowed}
 .back{flex:none;width:48px;height:48px;border-radius:50%;background:var(--head2);color:#fff;display:grid;place-items:center;border:3px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.2);transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
 .back:hover{transform:scale(1.08) translateX(-2px)}
 .back:active{transform:scale(.92)}
+.bar.acts h1{padding-right:0}
+.bar.acts{padding-right:6px}
+.bar .side{flex:none;display:flex;gap:6px}
+.back.ib:hover{transform:scale(1.08) rotate(-6deg)}
+.back.arm{background:#e03131;animation:shake .45s}
 .lead{margin:0;text-align:center;text-wrap:balance}
 .foot{margin:0;text-align:center;font-weight:800;color:var(--muted)}
 .panel{background:var(--panel);border-radius:22px;padding:14px;box-shadow:0 4px 0 rgba(0,0,0,.22)}
@@ -112,16 +117,12 @@ button:disabled{cursor:not-allowed}
 .dec{fill:none;stroke:#222;stroke-width:1.3;stroke-linecap:round;pointer-events:none}
 .thumb .dec{stroke-width:2}
 .num{font-family:var(--font-b);font-weight:800;fill:#222;text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:#fff;stroke-width:2.4px;stroke-linejoin:round;transform-box:fill-box;transform-origin:center;transition:opacity .3s,transform .35s}
-.num.hide,.nonum .num{opacity:0;transform:scale(1.9)}
+.num.hide{opacity:0;transform:scale(1.9)}
 .fx{pointer-events:none}
 .fx .spark{transform-box:fill-box;transform-origin:center;animation:spark .65s cubic-bezier(.2,.7,.4,1) forwards}
 @keyframes spark{to{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}
 .fx .ring{fill:none;stroke-width:2.5;transform-box:fill-box;transform-origin:center;animation:ring .55s ease-out forwards}
 @keyframes ring{from{transform:scale(.1);opacity:1}to{transform:scale(1);opacity:0}}
-.pulse>*{animation:pulse .5s ease 3}
-@keyframes pulse{50%{stroke:#e03131;stroke-width:4.5}}
-.pulse{animation:hintbob .5s ease 3}
-@keyframes hintbob{50%{transform:scale(1.06)}}
 .prog{display:flex;align-items:center;gap:12px}
 .track{flex:1;height:18px;border-radius:99px;background:var(--surf2);border:2px solid var(--line);overflow:hidden}
 .track>div{height:100%;width:0;border-radius:99px;background:var(--good) linear-gradient(45deg,rgba(255,255,255,.28) 25%,transparent 25% 50%,rgba(255,255,255,.28) 50% 75%,transparent 75%) 0 0/20px 20px;animation:stripes 1s linear infinite;transition:width .6s cubic-bezier(.3,1.4,.5,1)}
@@ -153,18 +154,11 @@ button:disabled{cursor:not-allowed}
 @keyframes donepop{35%{transform:scale(1.4) rotate(-12deg);opacity:1}70%{transform:scale(.95) rotate(6deg)}}
 .sw.shake{animation:shake .45s}
 @keyframes shake{20%{transform:translateX(-6px) rotate(-4deg)}40%{transform:translateX(6px) rotate(4deg)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
-.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
 .btn{padding:10px 16px;border-radius:14px;background:var(--surf);border:2px solid var(--line);font-weight:800;min-height:44px;transition:transform .18s cubic-bezier(.3,1.6,.5,1),background .2s,opacity .2s}
 .btn:hover:not(:disabled){transform:translateY(-2px)}
 .btn:active:not(:disabled){transform:translateY(1px) scale(.97)}
 .btn:disabled{opacity:.45}
 .btn.pri{background:var(--head);border-color:var(--head);color:#fff}
-.btn.arm{background:#e03131;border-color:#e03131;color:#fff;animation:shake .45s}
-.zoom{display:flex;align-items:center;gap:6px}
-.zoom .btn{padding-inline:14px;font-size:18px;line-height:1}
-.zoom output{min-width:3.2em;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}
-.switch{display:flex;align-items:center;gap:8px;min-height:44px;font-weight:800;cursor:pointer}
-.switch input{width:22px;height:22px;accent-color:var(--head)}
 /* pantalla final */
 .ov{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:16px;background:rgba(10,20,25,.62);overflow:hidden;animation:fade .3s ease}
 .ov[hidden]{display:none}
@@ -634,15 +628,17 @@ const thumb=d=>svgFor(d,painted(d.id),false);
 /* ---------- estado de la interfaz ---------- */
 const $=s=>document.querySelector(s);
 const app=$('#app'),ov=$('#ov');
-const ZOOMS=[1,1.5,2,3];
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
-let view={name:'home'},sel=1,zi=0,showNum=true,resetArm=false,resetTimer=0,msgTimer=0,celebrated=false;
-let hist=[],lastPct=-1,dragging=false,skipClick=false,wheelAt=0;
+let view={name:'home'},sel=1,resetArm=false,resetTimer=0,msgTimer=0,celebrated=false;
+let hist=[],lastPct=-1,dragging=false,skipClick=false;
 const cur=()=>DR.find(d=>d.id===view.id);
 const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 const again=(el,c,ms)=>{if(!el)return;el.classList.remove(c);void el.getBoundingClientRect();el.classList.add(c);if(ms)setTimeout(()=>el.classList.remove(c),ms)};
 function go(v,dir){view=v;ov.hidden=true;app.dataset.dir=dir||'fwd';render();window.scrollTo(0,0)}
 
+const ICON=d=>`<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const HOME=ICON('M3.5 11.5L12 4l8.5 7.5M6 10v9.5h4.5V14h3v5.5H18V10');
+const TRASH=ICON('M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5');
 const ARROW='<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function render(){
@@ -681,22 +677,15 @@ function renderLvl(){
 
 function renderPaint(){
   const d=cur(),set=painted(d.id);
-  zi=0;resetArm=false;hist=[];lastPct=-1;celebrated=set.size>=d.regions.length;
+  resetArm=false;hist=[];lastPct=-1;celebrated=set.size>=d.regions.length;
   store._last=d.id;save();
   const first=d.colors.findIndex((_,k)=>d.regions.some((r,i)=>r.n===k+1&&!set.has(i)));
   sel=first<0?1:first+1;
   app.innerHTML=`
-  <div class="bar withback"><button class="back" data-act="back" aria-label="Volver">${ARROW}</button><h1>${d.name}</h1></div>
+  <div class="bar withback acts"><button class="back" data-act="back" aria-label="Volver" title="Volver">${ARROW}</button><h1>${d.name}</h1><span class="side"><button class="back ib" data-act="home" aria-label="Inicio" title="Inicio">${HOME}</button><button class="back ib" data-act="reset" id="resetbtn" aria-label="Borrar todo" title="Borrar todo">${TRASH}</button></span></div>
   <div class="stage" id="stage">${svgFor(d,set,true)}</div>
   <div class="prog"><div class="track" id="track" role="progressbar" aria-label="Avance" aria-valuemin="0" aria-valuemax="100"><div id="fillbar"></div></div><span id="pct">0%</span></div>
   <div class="msg" id="msg" role="status" aria-live="polite"></div>
-  <div class="tools">
-    <button class="btn pri" data-act="hint">💡 Pista</button>
-    <button class="btn" data-act="undo" id="undobtn" disabled>↶ Deshacer</button>
-    <div class="zoom"><button class="btn" data-act="zout" id="zout" aria-label="Alejar">−</button><output id="zv">100%</output><button class="btn" data-act="zin" id="zin" aria-label="Acercar">+</button></div>
-    <label class="switch" for="shownum"><input type="checkbox" id="shownum" ${showNum?'checked':''}>Números</label>
-    <button class="btn" data-act="reset" id="resetbtn">Borrar todo</button>
-  </div>
   <div class="dock"><div class="cap"><span id="capsel"></span><span>← desliza →</span></div><div class="palette" id="pal" role="toolbar" aria-label="Colores">${d.colors.map((c,k)=>`<button class="sw" data-n="${k+1}" aria-pressed="false" aria-label="Color ${k+1}" style="--c:${c};--ci:${ink(c)}"><span class="dot">${k+1}</span><span class="left"></span></button>`).join('')}</div></div>`;
   refresh();
   const pal=$('#pal');$('.dock .cap span:last-child').hidden=pal.scrollWidth<=pal.clientWidth+2;
@@ -725,7 +714,6 @@ function brush(c){
 function refresh(){
   const d=cur(),set=painted(d.id),stage=$('#stage');
   stage.style.setProperty('--brush',brush(d.colors[sel-1]));
-  stage.querySelector('svg').classList.toggle('nonum',!showNum);
   d.regions.forEach((r,i)=>{
     const gEl=regEl(i),tx=stage.querySelector(`.num[data-i="${i}"]`);
     const on=set.has(i);
@@ -748,11 +736,6 @@ function refresh(){
   const pe=$('#pct');pe.textContent=pct+'%';
   if(lastPct>=0&&pct!==lastPct)again(pe,'bump',400);
   lastPct=pct;
-  const z=ZOOMS[zi];
-  stage.querySelector('svg').style.width=(z*100)+'%';
-  $('#zv').textContent=Math.round(z*100)+'%';
-  $('#zout').disabled=zi===0;$('#zin').disabled=zi===ZOOMS.length-1;
-  $('#undobtn').disabled=!hist.length;
 }
 
 /* elige un color, lo muestra en la paleta y hace parpadear sus zonas */
@@ -762,14 +745,6 @@ function pick(n){
   swatch(n)?.scrollIntoView({block:'nearest',inline:'center',behavior:reduce.matches?'auto':'smooth'});
   const set=painted(d.id);
   d.regions.forEach((r,i)=>{if(r.n===n&&!set.has(i))again(regEl(i),'blink',750)});
-}
-
-function setZoom(k){
-  const stage=$('#stage');
-  zi=Math.max(0,Math.min(ZOOMS.length-1,k));
-  refresh();
-  stage.scrollLeft=(stage.scrollWidth-stage.clientWidth)/2;
-  stage.scrollTop=(stage.scrollHeight-stage.clientHeight)/2;
 }
 
 /* ---------- efectos ---------- */
@@ -801,27 +776,6 @@ function animReg(i){
   const b=el.getBBox(),big=b.width*b.height>12000;
   el.classList.remove('pop','flash');
   again(el,big?'flash':'pop',650);
-}
-
-function hint(){
-  const d=cur(),set=painted(d.id),stage=$('#stage');
-  const open=n=>d.regions.map((r,i)=>i).filter(i=>!set.has(i)&&(n==null||d.regions[i].n===n));
-  let pool=open(sel);
-  if(!pool.length){
-    const any=open();
-    if(!any.length){say('¡Ya está todo pintado!');return}
-    pick(d.regions[any[0]].n);pool=open(sel);
-  }
-  // la zona más pequeña es la más difícil de encontrar
-  const area=i=>{const b=regEl(i).getBBox();return b.width*b.height};
-  const i=pool.sort((a,b)=>area(a)-area(b))[0];
-  const el=regEl(i);
-  const b=el.getBoundingClientRect(),s=stage.getBoundingClientRect();
-  if(b.left<s.left||b.right>s.right||b.top<s.top||b.bottom>s.bottom){
-    stage.scrollTo({left:stage.scrollLeft+(b.left+b.width/2)-(s.left+s.width/2),top:stage.scrollTop+(b.top+b.height/2)-(s.top+s.height/2),behavior:reduce.matches?'auto':'smooth'});
-  }
-  again(el,'pulse',1600);
-  say(`Mira la zona que parpadea: lleva el número ${sel}.`);
 }
 
 function paint(i,pt,quiet){
@@ -908,12 +862,6 @@ app.addEventListener('pointermove',e=>{
   if(reg)paint(+reg.dataset.i,svgPt(e),true);
 });
 window.addEventListener('pointerup',()=>{dragging=false});
-app.addEventListener('wheel',e=>{
-  if(view.name!=='paint'||!e.ctrlKey||!e.target.closest('#stage'))return;
-  e.preventDefault();
-  const now=Date.now();if(now-wheelAt<180)return;wheelAt=now;
-  setZoom(zi+(e.deltaY<0?1:-1));
-},{passive:false});
 app.addEventListener('click',e=>{
   const reg=e.target.closest('.reg');
   if(reg&&view.name==='paint'&&reg.closest('#stage')){
@@ -928,18 +876,16 @@ app.addEventListener('click',e=>{
   switch(t.dataset.act){
     case'home':go({name:'home'},'back');break;
     case'back':go({name:'lvl',id:cur().lvl},'back');break;
-    case'hint':hint();break;
     case'undo':undo();break;
-    case'zin':setZoom(zi+1);break;
-    case'zout':setZoom(zi-1);break;
     case'reset':{
       const b=$('#resetbtn');
       if(!resetArm){
-        resetArm=true;b.textContent='¿Seguro? Toca otra vez';b.classList.add('arm');
+        resetArm=true;b.classList.add('arm');b.setAttribute('aria-label','¿Seguro? Toca otra vez para borrar todo');
+        say('¿Borrar todo el dibujo? Toca otra vez la papelera.');
         clearTimeout(resetTimer);
-        resetTimer=setTimeout(()=>{resetArm=false;b.textContent='Borrar todo';b.classList.remove('arm')},3200);
+        resetTimer=setTimeout(()=>{resetArm=false;b.classList.remove('arm');b.setAttribute('aria-label','Borrar todo')},3200);
       }else{
-        clearTimeout(resetTimer);resetArm=false;b.textContent='Borrar todo';b.classList.remove('arm');
+        clearTimeout(resetTimer);resetArm=false;b.classList.remove('arm');b.setAttribute('aria-label','Borrar todo');
         const d=cur();store[d.id]=[];save();celebrated=false;hist=[];sel=1;refresh();
         d.regions.forEach((_,i)=>animReg(i));
         say('Dibujo borrado. ¡A pintar de nuevo!');
@@ -947,9 +893,6 @@ app.addEventListener('click',e=>{
       break;
     }
   }
-});
-app.addEventListener('change',e=>{
-  if(e.target.id==='shownum'){showNum=e.target.checked;refresh()}
 });
 ov.addEventListener('click',e=>{
   const t=e.target.closest('[data-ov]');
@@ -967,9 +910,6 @@ document.addEventListener('keydown',e=>{
   if(e.ctrlKey||e.metaKey||e.altKey)return;
   if(e.key==='ArrowRight'){e.preventDefault();pick(sel%d.colors.length+1);return}
   if(e.key==='ArrowLeft'){e.preventDefault();pick((sel+d.colors.length-2)%d.colors.length+1);return}
-  if(e.key==='h'||e.key==='H'){hint();return}
-  if(e.key==='+'){setZoom(zi+1);return}
-  if(e.key==='-'){setZoom(zi-1);return}
   const n=parseInt(e.key,10);
   if(n>=1&&n<=d.colors.length)pick(n);
 });
