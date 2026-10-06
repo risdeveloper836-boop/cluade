@@ -16,7 +16,9 @@
             entregado (trimestral 90 dias, mensual 28, oral 28 por ciclo...). La entrega es
             VALIDA si se hizo dentro de +/- 5 dias de esa fecha; si no, NO VALIDA (ADELANTADA
             o TARDIA). Solo las unidades validas cuentan para COMPLETO.
-  Salida  : 1) nominal por persona y metodo  2) nominal de entregas (una fila por entrega). Compatible con SQL Server 2012 o superior.
+  Salida  : UNA sola tabla: una fila por persona y metodo, con las entregas en columnas
+            (E1 = inicio ... E13). Para cada entrega: fecha programada, fecha real y validez.
+            Compatible con SQL Server 2012 o superior.
   Nota    : ejecutar el script COMPLETO (F5), sin seleccionar solo una parte.
 ===========================================================================================*/
 USE BDHIS_MINSA;
@@ -177,7 +179,15 @@ SELECT
         WHEN ABS(DATEDIFF(DAY, b.fec_programada, a.fecha)) <= @tol_valida THEN 'VALIDA'
         WHEN a.fecha < b.fec_programada                               THEN 'NO VALIDA - ADELANTADA'
         ELSE 'NO VALIDA - TARDIA'
-    END                                                                         AS validez
+    END                                                                         AS validez,
+    CASE
+        WHEN a.n_entrega = 1 OR b.fec_programada IS NULL              THEN NULL
+        WHEN ABS(DATEDIFF(DAY, b.fec_programada, a.fecha)) <= @tol_valida THEN 'VALIDA'
+        ELSE 'NO VALIDA'
+    END
+    + CASE WHEN b.fec_programada IS NULL THEN '' ELSE
+      ' (' + CASE WHEN DATEDIFF(DAY, b.fec_programada, a.fecha) > 0 THEN '+' ELSE '' END
+           + CONVERT(VARCHAR(5), DATEDIFF(DAY, b.fec_programada, a.fecha)) + 'd)' END AS val_txt
 INTO #seg
 FROM #seg0 AS a
 INNER JOIN #inicio       AS i ON i.id_episodio = a.id_episodio
@@ -194,18 +204,43 @@ SELECT
     SUM(CASE WHEN s.validez IN ('INICIO','VALIDA') THEN 1 ELSE 0 END)          AS entregas_validas,
     SUM(CASE WHEN s.validez IN ('INICIO','VALIDA') THEN s.cantidad ELSE 0 END) AS unidades_validas,
     MAX(s.fecha)                                             AS fec_ultima,
-    SUM(CASE WHEN s.mes_seg = 1  THEN s.cantidad ELSE 0 END) AS M01,
-    SUM(CASE WHEN s.mes_seg = 2  THEN s.cantidad ELSE 0 END) AS M02,
-    SUM(CASE WHEN s.mes_seg = 3  THEN s.cantidad ELSE 0 END) AS M03,
-    SUM(CASE WHEN s.mes_seg = 4  THEN s.cantidad ELSE 0 END) AS M04,
-    SUM(CASE WHEN s.mes_seg = 5  THEN s.cantidad ELSE 0 END) AS M05,
-    SUM(CASE WHEN s.mes_seg = 6  THEN s.cantidad ELSE 0 END) AS M06,
-    SUM(CASE WHEN s.mes_seg = 7  THEN s.cantidad ELSE 0 END) AS M07,
-    SUM(CASE WHEN s.mes_seg = 8  THEN s.cantidad ELSE 0 END) AS M08,
-    SUM(CASE WHEN s.mes_seg = 9  THEN s.cantidad ELSE 0 END) AS M09,
-    SUM(CASE WHEN s.mes_seg = 10 THEN s.cantidad ELSE 0 END) AS M10,
-    SUM(CASE WHEN s.mes_seg = 11 THEN s.cantidad ELSE 0 END) AS M11,
-    SUM(CASE WHEN s.mes_seg = 12 THEN s.cantidad ELSE 0 END) AS M12
+    MAX(CASE WHEN s.n_entrega = 1 THEN s.fecha END) AS E1_Fecha,
+    MAX(CASE WHEN s.n_entrega = 2 THEN s.fec_programada END) AS E2_Programada,
+    MAX(CASE WHEN s.n_entrega = 2 THEN s.fecha END) AS E2_Fecha,
+    MAX(CASE WHEN s.n_entrega = 2 THEN s.val_txt END) AS E2_Validez,
+    MAX(CASE WHEN s.n_entrega = 3 THEN s.fec_programada END) AS E3_Programada,
+    MAX(CASE WHEN s.n_entrega = 3 THEN s.fecha END) AS E3_Fecha,
+    MAX(CASE WHEN s.n_entrega = 3 THEN s.val_txt END) AS E3_Validez,
+    MAX(CASE WHEN s.n_entrega = 4 THEN s.fec_programada END) AS E4_Programada,
+    MAX(CASE WHEN s.n_entrega = 4 THEN s.fecha END) AS E4_Fecha,
+    MAX(CASE WHEN s.n_entrega = 4 THEN s.val_txt END) AS E4_Validez,
+    MAX(CASE WHEN s.n_entrega = 5 THEN s.fec_programada END) AS E5_Programada,
+    MAX(CASE WHEN s.n_entrega = 5 THEN s.fecha END) AS E5_Fecha,
+    MAX(CASE WHEN s.n_entrega = 5 THEN s.val_txt END) AS E5_Validez,
+    MAX(CASE WHEN s.n_entrega = 6 THEN s.fec_programada END) AS E6_Programada,
+    MAX(CASE WHEN s.n_entrega = 6 THEN s.fecha END) AS E6_Fecha,
+    MAX(CASE WHEN s.n_entrega = 6 THEN s.val_txt END) AS E6_Validez,
+    MAX(CASE WHEN s.n_entrega = 7 THEN s.fec_programada END) AS E7_Programada,
+    MAX(CASE WHEN s.n_entrega = 7 THEN s.fecha END) AS E7_Fecha,
+    MAX(CASE WHEN s.n_entrega = 7 THEN s.val_txt END) AS E7_Validez,
+    MAX(CASE WHEN s.n_entrega = 8 THEN s.fec_programada END) AS E8_Programada,
+    MAX(CASE WHEN s.n_entrega = 8 THEN s.fecha END) AS E8_Fecha,
+    MAX(CASE WHEN s.n_entrega = 8 THEN s.val_txt END) AS E8_Validez,
+    MAX(CASE WHEN s.n_entrega = 9 THEN s.fec_programada END) AS E9_Programada,
+    MAX(CASE WHEN s.n_entrega = 9 THEN s.fecha END) AS E9_Fecha,
+    MAX(CASE WHEN s.n_entrega = 9 THEN s.val_txt END) AS E9_Validez,
+    MAX(CASE WHEN s.n_entrega = 10 THEN s.fec_programada END) AS E10_Programada,
+    MAX(CASE WHEN s.n_entrega = 10 THEN s.fecha END) AS E10_Fecha,
+    MAX(CASE WHEN s.n_entrega = 10 THEN s.val_txt END) AS E10_Validez,
+    MAX(CASE WHEN s.n_entrega = 11 THEN s.fec_programada END) AS E11_Programada,
+    MAX(CASE WHEN s.n_entrega = 11 THEN s.fecha END) AS E11_Fecha,
+    MAX(CASE WHEN s.n_entrega = 11 THEN s.val_txt END) AS E11_Validez,
+    MAX(CASE WHEN s.n_entrega = 12 THEN s.fec_programada END) AS E12_Programada,
+    MAX(CASE WHEN s.n_entrega = 12 THEN s.fecha END) AS E12_Fecha,
+    MAX(CASE WHEN s.n_entrega = 12 THEN s.val_txt END) AS E12_Validez,
+    MAX(CASE WHEN s.n_entrega = 13 THEN s.fec_programada END) AS E13_Programada,
+    MAX(CASE WHEN s.n_entrega = 13 THEN s.fecha END) AS E13_Fecha,
+    MAX(CASE WHEN s.n_entrega = 13 THEN s.val_txt END) AS E13_Validez
 INTO #seg_res
 FROM #seg AS s
 GROUP BY s.id_episodio;
@@ -228,18 +263,19 @@ SELECT
     CASE WHEN i.fec_fin_seg < @fec_corte THEN i.fec_fin_seg ELSE @fec_corte END AS fec_eval,
     c.metodo                                                                    AS metodo_nuevo,
     c.fecha                                                                     AS fec_cambio,
-    r.M01, r.M02, r.M03, r.M04, r.M05, r.M06, r.M07, r.M08, r.M09, r.M10, r.M11, r.M12,
-    STUFF((SELECT ', ' + CONVERT(VARCHAR(10), f.fecha, 103) + ' ' +
-                  CASE WHEN f.validez = 'INICIO' THEN 'INICIO'
-                       WHEN f.validez = 'VALIDA' THEN 'OK'
-                       WHEN f.validez = 'NO APLICA' THEN '-'
-                       ELSE 'NO VALIDA(' + CASE WHEN f.dif_dias > 0 THEN '+' ELSE '' END
-                            + CONVERT(VARCHAR(5), f.dif_dias) + 'd)'
-                  END
-           FROM #seg AS f
-           WHERE f.id_episodio = i.id_episodio
-           ORDER BY f.fecha
-           FOR XML PATH('')), 1, 2, '')                                         AS fechas_entrega
+    r.E1_Fecha,
+    r.E2_Programada, r.E2_Fecha, r.E2_Validez,
+    r.E3_Programada, r.E3_Fecha, r.E3_Validez,
+    r.E4_Programada, r.E4_Fecha, r.E4_Validez,
+    r.E5_Programada, r.E5_Fecha, r.E5_Validez,
+    r.E6_Programada, r.E6_Fecha, r.E6_Validez,
+    r.E7_Programada, r.E7_Fecha, r.E7_Validez,
+    r.E8_Programada, r.E8_Fecha, r.E8_Validez,
+    r.E9_Programada, r.E9_Fecha, r.E9_Validez,
+    r.E10_Programada, r.E10_Fecha, r.E10_Validez,
+    r.E11_Programada, r.E11_Fecha, r.E11_Validez,
+    r.E12_Programada, r.E12_Fecha, r.E12_Validez,
+    r.E13_Programada, r.E13_Fecha, r.E13_Validez
 INTO #nominal
 FROM #inicio AS i
 INNER JOIN #metodo_param AS p ON p.metodo = i.metodo
@@ -276,7 +312,7 @@ SELECT
 INTO #reporte
 FROM #nominal AS n;
 
-/* NOMINAL 1: una fila por persona y metodo iniciado */
+/* NOMINAL: una fila por persona y metodo iniciado, con sus entregas en columnas */
 SELECT
     e.Descripcion_MicroRed     AS MicroRed,
     r.renaes_inicio            AS Renaes,
@@ -300,30 +336,20 @@ SELECT
     r.estado                   AS Estado,
     r.metodo_nuevo             AS Cambio_a,
     r.fec_cambio               AS Fecha_cambio,
-    r.M01, r.M02, r.M03, r.M04, r.M05, r.M06, r.M07, r.M08, r.M09, r.M10, r.M11, r.M12,
-    r.fechas_entrega           AS Fechas_entrega
+    r.E1_Fecha,
+    r.E2_Programada, r.E2_Fecha, r.E2_Validez,
+    r.E3_Programada, r.E3_Fecha, r.E3_Validez,
+    r.E4_Programada, r.E4_Fecha, r.E4_Validez,
+    r.E5_Programada, r.E5_Fecha, r.E5_Validez,
+    r.E6_Programada, r.E6_Fecha, r.E6_Validez,
+    r.E7_Programada, r.E7_Fecha, r.E7_Validez,
+    r.E8_Programada, r.E8_Fecha, r.E8_Validez,
+    r.E9_Programada, r.E9_Fecha, r.E9_Validez,
+    r.E10_Programada, r.E10_Fecha, r.E10_Validez,
+    r.E11_Programada, r.E11_Fecha, r.E11_Validez,
+    r.E12_Programada, r.E12_Fecha, r.E12_Validez,
+    r.E13_Programada, r.E13_Fecha, r.E13_Validez
 FROM #reporte AS r
 LEFT JOIN cgsalud2025.dbo.establecimiento AS e
        ON TRY_CONVERT(INT, e.Codigo_Unico) = TRY_CONVERT(INT, r.renaes_inicio)
 ORDER BY r.metodo, r.fec_inicio, r.num_doc;
-
-/* NOMINAL 2: una fila por entrega, con fecha programada y validez */
-SELECT
-    e.Descripcion_MicroRed     AS MicroRed,
-    s.renaes                   AS Renaes_entrega,
-    e.Nombre_Establecimiento   AS Establecimiento,
-    i.num_doc                  AS DNI,
-    i.metodo                   AS Metodo,
-    i.fec_inicio               AS Fecha_inicio,
-    s.n_entrega                AS N_entrega,
-    s.fec_programada           AS Fecha_programada,
-    s.fecha                    AS Fecha_entrega,
-    s.dif_dias                 AS Dif_dias,
-    s.validez                  AS Validez,
-    s.cantidad                 AS Cantidad,
-    s.mes_seg                  AS Mes_seguimiento
-FROM #seg AS s
-INNER JOIN #inicio AS i ON i.id_episodio = s.id_episodio
-LEFT JOIN cgsalud2025.dbo.establecimiento AS e
-       ON TRY_CONVERT(INT, e.Codigo_Unico) = TRY_CONVERT(INT, s.renaes)
-ORDER BY i.metodo, i.num_doc, s.n_entrega;
