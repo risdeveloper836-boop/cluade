@@ -20,12 +20,12 @@
             VALIDA si se hizo dentro de +/- 5 dias de esa fecha.
             Columna Ex_Validez:  0 = no tiene entrega
                                  1 = valido (inicio, o dentro de +/- 5 dias)
-                                 2 = observado (fuera de +/- 5 dias; ver Ex_Dif_dias)
+                                 2 = observado (fuera de +/- 5 dias)
             Solo las entregas validas (1) cuentan para COMPLETO.
   Ultimo  : ultimo metodo recibido por la persona hasta la fecha de corte (cualquier metodo).
   Salida  : UNA sola tabla: una fila por persona y metodo, con las entregas en columnas
-            (E1 = inicio ... E13). Para cada entrega: fecha programada, fecha real, dias de
-            diferencia, validez (0/1/2)
+            (E1 = inicio ... E13). Para cada entrega: fecha programada, fecha real,
+            validez (0/1/2)
             y registro HIS (Tipo_Diagnostico/Codigo_Item/valor_lab).
             Compatible con SQL Server 2012 o superior.
   Nota    : ejecutar el script COMPLETO (F5), sin seleccionar solo una parte.
@@ -250,65 +250,52 @@ SELECT
     MAX(s.fecha)                                             AS fec_ultima,
     MAX(CASE WHEN s.n_entrega = 1 THEN s.fecha END) AS E1_Fecha,
     MAX(CASE WHEN s.n_entrega = 1 THEN s.registro END) AS E1_Registro,
-    ISNULL(MAX(CASE WHEN s.n_entrega = 1 THEN s.val_cod END), 0) AS E1_Validez,
     MAX(CASE WHEN s.n_entrega = 2 THEN s.fec_programada END) AS E2_Programada,
     MAX(CASE WHEN s.n_entrega = 2 THEN s.fecha END) AS E2_Fecha,
-    MAX(CASE WHEN s.n_entrega = 2 THEN s.dif_dias END) AS E2_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 2 THEN s.val_cod END), 0) AS E2_Validez,
     MAX(CASE WHEN s.n_entrega = 2 THEN s.registro END) AS E2_Registro,
     MAX(CASE WHEN s.n_entrega = 3 THEN s.fec_programada END) AS E3_Programada,
     MAX(CASE WHEN s.n_entrega = 3 THEN s.fecha END) AS E3_Fecha,
-    MAX(CASE WHEN s.n_entrega = 3 THEN s.dif_dias END) AS E3_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 3 THEN s.val_cod END), 0) AS E3_Validez,
     MAX(CASE WHEN s.n_entrega = 3 THEN s.registro END) AS E3_Registro,
     MAX(CASE WHEN s.n_entrega = 4 THEN s.fec_programada END) AS E4_Programada,
     MAX(CASE WHEN s.n_entrega = 4 THEN s.fecha END) AS E4_Fecha,
-    MAX(CASE WHEN s.n_entrega = 4 THEN s.dif_dias END) AS E4_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 4 THEN s.val_cod END), 0) AS E4_Validez,
     MAX(CASE WHEN s.n_entrega = 4 THEN s.registro END) AS E4_Registro,
     MAX(CASE WHEN s.n_entrega = 5 THEN s.fec_programada END) AS E5_Programada,
     MAX(CASE WHEN s.n_entrega = 5 THEN s.fecha END) AS E5_Fecha,
-    MAX(CASE WHEN s.n_entrega = 5 THEN s.dif_dias END) AS E5_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 5 THEN s.val_cod END), 0) AS E5_Validez,
     MAX(CASE WHEN s.n_entrega = 5 THEN s.registro END) AS E5_Registro,
     MAX(CASE WHEN s.n_entrega = 6 THEN s.fec_programada END) AS E6_Programada,
     MAX(CASE WHEN s.n_entrega = 6 THEN s.fecha END) AS E6_Fecha,
-    MAX(CASE WHEN s.n_entrega = 6 THEN s.dif_dias END) AS E6_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 6 THEN s.val_cod END), 0) AS E6_Validez,
     MAX(CASE WHEN s.n_entrega = 6 THEN s.registro END) AS E6_Registro,
     MAX(CASE WHEN s.n_entrega = 7 THEN s.fec_programada END) AS E7_Programada,
     MAX(CASE WHEN s.n_entrega = 7 THEN s.fecha END) AS E7_Fecha,
-    MAX(CASE WHEN s.n_entrega = 7 THEN s.dif_dias END) AS E7_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 7 THEN s.val_cod END), 0) AS E7_Validez,
     MAX(CASE WHEN s.n_entrega = 7 THEN s.registro END) AS E7_Registro,
     MAX(CASE WHEN s.n_entrega = 8 THEN s.fec_programada END) AS E8_Programada,
     MAX(CASE WHEN s.n_entrega = 8 THEN s.fecha END) AS E8_Fecha,
-    MAX(CASE WHEN s.n_entrega = 8 THEN s.dif_dias END) AS E8_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 8 THEN s.val_cod END), 0) AS E8_Validez,
     MAX(CASE WHEN s.n_entrega = 8 THEN s.registro END) AS E8_Registro,
     MAX(CASE WHEN s.n_entrega = 9 THEN s.fec_programada END) AS E9_Programada,
     MAX(CASE WHEN s.n_entrega = 9 THEN s.fecha END) AS E9_Fecha,
-    MAX(CASE WHEN s.n_entrega = 9 THEN s.dif_dias END) AS E9_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 9 THEN s.val_cod END), 0) AS E9_Validez,
     MAX(CASE WHEN s.n_entrega = 9 THEN s.registro END) AS E9_Registro,
     MAX(CASE WHEN s.n_entrega = 10 THEN s.fec_programada END) AS E10_Programada,
     MAX(CASE WHEN s.n_entrega = 10 THEN s.fecha END) AS E10_Fecha,
-    MAX(CASE WHEN s.n_entrega = 10 THEN s.dif_dias END) AS E10_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 10 THEN s.val_cod END), 0) AS E10_Validez,
     MAX(CASE WHEN s.n_entrega = 10 THEN s.registro END) AS E10_Registro,
     MAX(CASE WHEN s.n_entrega = 11 THEN s.fec_programada END) AS E11_Programada,
     MAX(CASE WHEN s.n_entrega = 11 THEN s.fecha END) AS E11_Fecha,
-    MAX(CASE WHEN s.n_entrega = 11 THEN s.dif_dias END) AS E11_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 11 THEN s.val_cod END), 0) AS E11_Validez,
     MAX(CASE WHEN s.n_entrega = 11 THEN s.registro END) AS E11_Registro,
     MAX(CASE WHEN s.n_entrega = 12 THEN s.fec_programada END) AS E12_Programada,
     MAX(CASE WHEN s.n_entrega = 12 THEN s.fecha END) AS E12_Fecha,
-    MAX(CASE WHEN s.n_entrega = 12 THEN s.dif_dias END) AS E12_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 12 THEN s.val_cod END), 0) AS E12_Validez,
     MAX(CASE WHEN s.n_entrega = 12 THEN s.registro END) AS E12_Registro,
     MAX(CASE WHEN s.n_entrega = 13 THEN s.fec_programada END) AS E13_Programada,
     MAX(CASE WHEN s.n_entrega = 13 THEN s.fecha END) AS E13_Fecha,
-    MAX(CASE WHEN s.n_entrega = 13 THEN s.dif_dias END) AS E13_Dif_dias,
     ISNULL(MAX(CASE WHEN s.n_entrega = 13 THEN s.val_cod END), 0) AS E13_Validez,
     MAX(CASE WHEN s.n_entrega = 13 THEN s.registro END) AS E13_Registro
 INTO #seg_res
@@ -335,19 +322,19 @@ SELECT
     c.fecha                                                                     AS fec_cambio,
     ul.metodo                                                                   AS ultimo_metodo,
     ul.fecha                                                                    AS fec_ultimo_metodo,
-    r.E1_Fecha, r.E1_Validez, r.E1_Registro,
-    r.E2_Programada, r.E2_Fecha, r.E2_Dif_dias, r.E2_Validez, r.E2_Registro,
-    r.E3_Programada, r.E3_Fecha, r.E3_Dif_dias, r.E3_Validez, r.E3_Registro,
-    r.E4_Programada, r.E4_Fecha, r.E4_Dif_dias, r.E4_Validez, r.E4_Registro,
-    r.E5_Programada, r.E5_Fecha, r.E5_Dif_dias, r.E5_Validez, r.E5_Registro,
-    r.E6_Programada, r.E6_Fecha, r.E6_Dif_dias, r.E6_Validez, r.E6_Registro,
-    r.E7_Programada, r.E7_Fecha, r.E7_Dif_dias, r.E7_Validez, r.E7_Registro,
-    r.E8_Programada, r.E8_Fecha, r.E8_Dif_dias, r.E8_Validez, r.E8_Registro,
-    r.E9_Programada, r.E9_Fecha, r.E9_Dif_dias, r.E9_Validez, r.E9_Registro,
-    r.E10_Programada, r.E10_Fecha, r.E10_Dif_dias, r.E10_Validez, r.E10_Registro,
-    r.E11_Programada, r.E11_Fecha, r.E11_Dif_dias, r.E11_Validez, r.E11_Registro,
-    r.E12_Programada, r.E12_Fecha, r.E12_Dif_dias, r.E12_Validez, r.E12_Registro,
-    r.E13_Programada, r.E13_Fecha, r.E13_Dif_dias, r.E13_Validez, r.E13_Registro
+    r.E1_Fecha, r.E1_Registro,
+    r.E2_Programada, r.E2_Fecha, r.E2_Validez, r.E2_Registro,
+    r.E3_Programada, r.E3_Fecha, r.E3_Validez, r.E3_Registro,
+    r.E4_Programada, r.E4_Fecha, r.E4_Validez, r.E4_Registro,
+    r.E5_Programada, r.E5_Fecha, r.E5_Validez, r.E5_Registro,
+    r.E6_Programada, r.E6_Fecha, r.E6_Validez, r.E6_Registro,
+    r.E7_Programada, r.E7_Fecha, r.E7_Validez, r.E7_Registro,
+    r.E8_Programada, r.E8_Fecha, r.E8_Validez, r.E8_Registro,
+    r.E9_Programada, r.E9_Fecha, r.E9_Validez, r.E9_Registro,
+    r.E10_Programada, r.E10_Fecha, r.E10_Validez, r.E10_Registro,
+    r.E11_Programada, r.E11_Fecha, r.E11_Validez, r.E11_Registro,
+    r.E12_Programada, r.E12_Fecha, r.E12_Validez, r.E12_Registro,
+    r.E13_Programada, r.E13_Fecha, r.E13_Validez, r.E13_Registro
 INTO #nominal
 FROM #inicio AS i
 INNER JOIN #metodo_param AS p ON p.metodo = i.metodo
@@ -388,7 +375,9 @@ SELECT
 INTO #reporte
 FROM #nominal AS n;
 
-/* NOMINAL: una fila por persona y metodo iniciado, con sus entregas en columnas */
+/* NOMINAL: una fila por persona y metodo iniciado, con sus entregas en columnas.
+   E1 es el inicio (su fecha es Fecha_inicio). Desde E2: fecha programada, fecha real,
+   validez (0 = no tiene, 1 = valido, 2 = observado) y registro HIS. */
 SELECT
     e.Descripcion_MicroRed     AS MicroRed,
     r.renaes_inicio            AS Renaes,
@@ -398,35 +387,28 @@ SELECT
     r.edad_inicio              AS Edad_inicio,
     r.metodo                   AS Metodo,
     r.fec_inicio               AS Fecha_inicio,
-    r.fec_fin_seg              AS Fin_seguimiento,
-    r.seguimiento              AS Seguimiento,
-    r.meta_anual               AS Meta_anual,
+    r.estado                   AS Estado,
     r.n_entregas               AS Entregas,
-    r.unidades                 AS Unidades,
     r.entregas_validas         AS Entregas_validas,
-    r.unidades_validas         AS Unidades_validas,
     r.avance_pct               AS Avance_pct,
     r.fec_ultima               AS Ultima_entrega,
     r.fec_proxima              AS Proxima_cita,
     r.dias_atraso              AS Dias_atraso,
-    r.estado                   AS Estado,
-    r.metodo_nuevo             AS Cambio_a,
-    r.fec_cambio               AS Fecha_cambio,
     r.ultimo_metodo            AS Ultimo_metodo,
     r.fec_ultimo_metodo        AS Fecha_ultimo_metodo,
-    r.E1_Fecha, r.E1_Validez, r.E1_Registro,
-    r.E2_Programada, r.E2_Fecha, r.E2_Dif_dias, r.E2_Validez, r.E2_Registro,
-    r.E3_Programada, r.E3_Fecha, r.E3_Dif_dias, r.E3_Validez, r.E3_Registro,
-    r.E4_Programada, r.E4_Fecha, r.E4_Dif_dias, r.E4_Validez, r.E4_Registro,
-    r.E5_Programada, r.E5_Fecha, r.E5_Dif_dias, r.E5_Validez, r.E5_Registro,
-    r.E6_Programada, r.E6_Fecha, r.E6_Dif_dias, r.E6_Validez, r.E6_Registro,
-    r.E7_Programada, r.E7_Fecha, r.E7_Dif_dias, r.E7_Validez, r.E7_Registro,
-    r.E8_Programada, r.E8_Fecha, r.E8_Dif_dias, r.E8_Validez, r.E8_Registro,
-    r.E9_Programada, r.E9_Fecha, r.E9_Dif_dias, r.E9_Validez, r.E9_Registro,
-    r.E10_Programada, r.E10_Fecha, r.E10_Dif_dias, r.E10_Validez, r.E10_Registro,
-    r.E11_Programada, r.E11_Fecha, r.E11_Dif_dias, r.E11_Validez, r.E11_Registro,
-    r.E12_Programada, r.E12_Fecha, r.E12_Dif_dias, r.E12_Validez, r.E12_Registro,
-    r.E13_Programada, r.E13_Fecha, r.E13_Dif_dias, r.E13_Validez, r.E13_Registro
+    r.E1_Registro,
+    r.E2_Programada, r.E2_Fecha, r.E2_Validez, r.E2_Registro,
+    r.E3_Programada, r.E3_Fecha, r.E3_Validez, r.E3_Registro,
+    r.E4_Programada, r.E4_Fecha, r.E4_Validez, r.E4_Registro,
+    r.E5_Programada, r.E5_Fecha, r.E5_Validez, r.E5_Registro,
+    r.E6_Programada, r.E6_Fecha, r.E6_Validez, r.E6_Registro,
+    r.E7_Programada, r.E7_Fecha, r.E7_Validez, r.E7_Registro,
+    r.E8_Programada, r.E8_Fecha, r.E8_Validez, r.E8_Registro,
+    r.E9_Programada, r.E9_Fecha, r.E9_Validez, r.E9_Registro,
+    r.E10_Programada, r.E10_Fecha, r.E10_Validez, r.E10_Registro,
+    r.E11_Programada, r.E11_Fecha, r.E11_Validez, r.E11_Registro,
+    r.E12_Programada, r.E12_Fecha, r.E12_Validez, r.E12_Registro,
+    r.E13_Programada, r.E13_Fecha, r.E13_Validez, r.E13_Registro
 FROM #reporte AS r
 LEFT JOIN cgsalud2025.dbo.establecimiento AS e
        ON TRY_CONVERT(INT, e.Codigo_Unico) = TRY_CONVERT(INT, r.renaes_inicio)
