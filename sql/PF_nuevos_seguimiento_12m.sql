@@ -2,6 +2,9 @@
   PLANIFICACION FAMILIAR: NOMINAL DE USUARIOS NUEVOS Y SU SEGUIMIENTO A 12 MESES
 
   Cohorte : personas (DNI) que INICIAN un metodo anticonceptivo moderno desde el 01/01/2025.
+  Entrega : igual que el script original del indicador N 13: codigo del metodo con
+            Tipo_Diagnostico D o R, en una cita que tiene 99208 con valor_lab = 'TA'.
+            Vale para el inicio, para cada entrega y para el ultimo metodo.
   Nuevo   : primera entrega del metodo sin otra entrega del MISMO metodo en los 365 dias previos.
   Excluye : gestantes, igual que el script del indicador N 13 (toda persona con codigo de
             embarazo o valor_lab = 'G' en el periodo queda fuera del nominal).
@@ -13,9 +16,10 @@
             EN SEGUIMIENTO - AL DIA / CITA VENCIDA (aun no cumple los 12 meses)
             INCOMPLETO                    (cerro los 12 meses sin abandono, pero bajo la meta)
   Validez : cada entrega tiene una fecha programada = entrega anterior + dias que protege lo
-            entregado (trimestral 90 dias, mensual 28, oral 28 por ciclo...). La entrega es
+            entregado (trimestral 90 dias, mensual 28, oral 28 por ciclo, condon 30...). La entrega es
             VALIDA si se hizo dentro de +/- 5 dias de esa fecha; si no, NO VALIDA (ADELANTADA
             o TARDIA). Solo las unidades validas cuentan para COMPLETO.
+  Ultimo  : ultimo metodo recibido por la persona hasta la fecha de corte (cualquier metodo).
   Salida  : UNA sola tabla: una fila por persona y metodo, con las entregas en columnas
             (E1 = inicio ... E13). Para cada entrega: fecha programada, fecha real y validez.
             Compatible con SQL Server 2012 o superior.
@@ -47,6 +51,8 @@ SET @tol_valida  = 5;                          /* +/- dias para que la entrega s
   meta_anual    : unidades que dan 1 anio de proteccion (inyectable trimestral = 4 dosis).
   dias_x_unidad : dias que protege cada unidad entregada (para calcular la proxima cita).
   tolerancia    : dias de gracia despues de la proxima cita antes de considerar ABANDONO.
+  usa_cantidad  : 1 = la proteccion depende de la cantidad registrada en valor_lab (ciclos
+                  del oral); 0 = cada entrega cuenta como 1 (inyectables, condones: mensual).
 =======================================================================================*/
 IF OBJECT_ID('tempdb..#metodo') IS NOT NULL DROP TABLE #metodo;
 CREATE TABLE #metodo(
@@ -55,20 +61,21 @@ CREATE TABLE #metodo(
     tipo          VARCHAR(12),
     meta_anual    INT,
     dias_x_unidad DECIMAL(6,2),
-    tolerancia    INT
+    tolerancia    INT,
+    usa_cantidad  BIT
 );
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('99208.05', 'INYECTABLE TRIMESTRAL', 'CORTO', 4, 90.00, 30);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('99208.04', 'INYECTABLE MENSUAL', 'CORTO', 13, 28.00, 7);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('99208.13', 'ORAL COMBINADO', 'CORTO', 13, 28.00, 7);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('99208.02', 'CONDON MASCULINO', 'CORTO', 100, 3.65, 15);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('99208.06', 'CONDON FEMENINO', 'CORTO', 100, 3.65, 15);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('58300', 'DIU', 'LARGO', 1, NULL, NULL);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('58300.01', 'SIU', 'LARGO', 1, NULL, NULL);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('11975', 'IMPLANTE', 'LARGO', 1, NULL, NULL);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('58600', 'LIGADURA DE TROMPAS', 'DEFINITIVO', 1, NULL, NULL);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('58605', 'LIGADURA DE TROMPAS', 'DEFINITIVO', 1, NULL, NULL);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('58611', 'LIGADURA DE TROMPAS', 'DEFINITIVO', 1, NULL, NULL);
-INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia) VALUES ('55250', 'VASECTOMIA', 'DEFINITIVO', 1, NULL, NULL);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('99208.05', 'INYECTABLE TRIMESTRAL', 'CORTO', 4, 90.00, 30, 0);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('99208.04', 'INYECTABLE MENSUAL', 'CORTO', 13, 28.00, 7, 0);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('99208.13', 'ORAL COMBINADO', 'CORTO', 13, 28.00, 7, 1);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('99208.02', 'CONDON MASCULINO', 'CORTO', 12, 30.00, 7, 0);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('99208.06', 'CONDON FEMENINO', 'CORTO', 12, 30.00, 7, 0);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('58300', 'DIU', 'LARGO', 1, NULL, NULL, 0);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('58300.01', 'SIU', 'LARGO', 1, NULL, NULL, 0);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('11975', 'IMPLANTE', 'LARGO', 1, NULL, NULL, 0);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('58600', 'LIGADURA DE TROMPAS', 'DEFINITIVO', 1, NULL, NULL, 0);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('58605', 'LIGADURA DE TROMPAS', 'DEFINITIVO', 1, NULL, NULL, 0);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('58611', 'LIGADURA DE TROMPAS', 'DEFINITIVO', 1, NULL, NULL, 0);
+INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad) VALUES ('55250', 'VASECTOMIA', 'DEFINITIVO', 1, NULL, NULL, 0);
 
 /* Un registro por metodo (la ligadura tiene 3 codigos) */
 IF OBJECT_ID('tempdb..#metodo_param') IS NOT NULL DROP TABLE #metodo_param;
@@ -79,8 +86,9 @@ FROM #metodo;
 /*============================ 1. ENTREGAS DE METODOS (HIS) ============================
   Se lee desde el anio anterior al inicio de la cohorte para saber quien es NUEVO en enero.
   Una fila por persona + metodo + dia.
-  cantidad: numero registrado en valor_lab (ciclos, condones, ampollas); si esta vacio o no
-            es numerico se toma 1.
+  Solo entregas validas segun el script original: Tipo_Diagnostico D o R y la cita debe tener
+  99208 con valor_lab = 'TA'.
+  cantidad: oral = ciclos registrados en valor_lab (vacio o no numerico = 1); los demas = 1.
 =======================================================================================*/
 IF OBJECT_ID('tempdb..#entrega') IS NOT NULL DROP TABLE #entrega;
 SELECT
@@ -91,7 +99,9 @@ SELECT
     MAX(h.Codigo_Unico)                                            AS renaes,
     MAX(h.id_genero)                                               AS id_genero,
     MAX(CASE WHEN h.Tipo_Edad = 'A' THEN h.edad_reg END)           AS edad,
-    MAX(ISNULL(NULLIF(TRY_CONVERT(INT, h.valor_lab), 0), 1))       AS cantidad
+    MAX(CASE WHEN m.usa_cantidad = 1
+             THEN ISNULL(NULLIF(TRY_CONVERT(INT, h.valor_lab), 0), 1)
+             ELSE 1 END)                                           AS cantidad
 INTO #entrega
 FROM BDHIS_MINSA.dbo.DATA_HIS AS h WITH (NOLOCK)
 INNER JOIN #metodo AS m ON m.cod_item = h.Codigo_Item
@@ -99,6 +109,12 @@ WHERE h.anio BETWEEN YEAR(@ini_cohorte) - 1 AND YEAR(@fec_corte)
   AND h.Tipo_Doc_Paciente = 1
   AND h.Tipo_Diagnostico IN ('D', 'R')
   AND CONVERT(DATE, h.Fecha_Atencion) <= @fec_corte
+  AND EXISTS (SELECT 1
+              FROM BDHIS_MINSA.dbo.DATA_HIS AS ta WITH (NOLOCK)
+              WHERE ta.id_cita     = h.id_cita
+                AND ta.anio        = h.anio
+                AND ta.Codigo_Item = '99208'
+                AND ta.valor_lab   = 'TA')
 GROUP BY h.Numero_Documento_Paciente, m.metodo, m.tipo, CONVERT(DATE, h.Fecha_Atencion);
 
 CREATE CLUSTERED INDEX ix_ent ON #entrega (num_doc, metodo, fecha);
@@ -263,6 +279,8 @@ SELECT
     CASE WHEN i.fec_fin_seg < @fec_corte THEN i.fec_fin_seg ELSE @fec_corte END AS fec_eval,
     c.metodo                                                                    AS metodo_nuevo,
     c.fecha                                                                     AS fec_cambio,
+    ul.metodo                                                                   AS ultimo_metodo,
+    ul.fecha                                                                    AS fec_ultimo_metodo,
     r.E1_Fecha,
     r.E2_Programada, r.E2_Fecha, r.E2_Validez,
     r.E3_Programada, r.E3_Fecha, r.E3_Validez,
@@ -287,7 +305,11 @@ OUTER APPLY (SELECT TOP 1 x.metodo, x.fecha
                AND x.metodo <> i.metodo
                AND x.fecha >  r.fec_ultima
                AND x.fecha <= i.fec_fin_seg
-             ORDER BY x.fecha) AS c;
+             ORDER BY x.fecha) AS c
+OUTER APPLY (SELECT TOP 1 y.metodo, y.fecha
+             FROM #entrega AS y
+             WHERE y.num_doc = i.num_doc
+             ORDER BY y.fecha DESC, y.metodo) AS ul;
 
 /*============================ 5. NOMINAL CON ESTADO FINAL ==============================*/
 IF OBJECT_ID('tempdb..#reporte') IS NOT NULL DROP TABLE #reporte;
@@ -336,6 +358,8 @@ SELECT
     r.estado                   AS Estado,
     r.metodo_nuevo             AS Cambio_a,
     r.fec_cambio               AS Fecha_cambio,
+    r.ultimo_metodo            AS Ultimo_metodo,
+    r.fec_ultimo_metodo        AS Fecha_ultimo_metodo,
     r.E1_Fecha,
     r.E2_Programada, r.E2_Fecha, r.E2_Validez,
     r.E3_Programada, r.E3_Fecha, r.E3_Validez,
