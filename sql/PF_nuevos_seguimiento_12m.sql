@@ -25,7 +25,8 @@
             el % de avance; el codigo 2 solo marca que fueron fuera de +/- 5 dias.
   Ultimo  : ultimo metodo recibido por la persona hasta la fecha de corte (cualquier metodo).
   Salida  : UNA sola tabla: una fila por persona y metodo, con las entregas en columnas
-            (E1 = inicio ... E13). Para cada entrega: fecha programada, fecha real,
+            (E1 = inicio ... E13). Para cada entrega: fecha programada (tambien la de las
+            entregas que faltan, proyectada segun el metodo), fecha real,
             validez (0/1/2)
             y registro HIS (Tipo_Diagnostico/Codigo_Item/valor_lab).
             Compatible con SQL Server 2012 o superior.
@@ -85,7 +86,7 @@ INSERT INTO #metodo (cod_item, metodo, tipo, meta_anual, dias_x_unidad, toleranc
 
 /* Un registro por metodo (la ligadura tiene 3 codigos) */
 IF OBJECT_ID('tempdb..#metodo_param') IS NOT NULL DROP TABLE #metodo_param;
-SELECT DISTINCT metodo, tipo, meta_anual, dias_x_unidad, tolerancia
+SELECT DISTINCT metodo, tipo, meta_anual, dias_x_unidad, tolerancia, usa_cantidad
 INTO #metodo_param
 FROM #metodo;
 
@@ -250,57 +251,92 @@ SELECT
     MAX(s.fecha)                                             AS fec_ultima,
     MAX(CASE WHEN s.n_entrega = 1 THEN s.fecha END) AS E1_Fecha,
     MAX(CASE WHEN s.n_entrega = 1 THEN s.registro END) AS E1_Registro,
-    MAX(CASE WHEN s.n_entrega = 2 THEN s.fec_programada END) AS E2_Programada,
     MAX(CASE WHEN s.n_entrega = 2 THEN s.fecha END) AS E2_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 2 THEN s.val_cod END), 0) AS E2_Validez,
     MAX(CASE WHEN s.n_entrega = 2 THEN s.registro END) AS E2_Registro,
-    MAX(CASE WHEN s.n_entrega = 3 THEN s.fec_programada END) AS E3_Programada,
     MAX(CASE WHEN s.n_entrega = 3 THEN s.fecha END) AS E3_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 3 THEN s.val_cod END), 0) AS E3_Validez,
     MAX(CASE WHEN s.n_entrega = 3 THEN s.registro END) AS E3_Registro,
-    MAX(CASE WHEN s.n_entrega = 4 THEN s.fec_programada END) AS E4_Programada,
     MAX(CASE WHEN s.n_entrega = 4 THEN s.fecha END) AS E4_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 4 THEN s.val_cod END), 0) AS E4_Validez,
     MAX(CASE WHEN s.n_entrega = 4 THEN s.registro END) AS E4_Registro,
-    MAX(CASE WHEN s.n_entrega = 5 THEN s.fec_programada END) AS E5_Programada,
     MAX(CASE WHEN s.n_entrega = 5 THEN s.fecha END) AS E5_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 5 THEN s.val_cod END), 0) AS E5_Validez,
     MAX(CASE WHEN s.n_entrega = 5 THEN s.registro END) AS E5_Registro,
-    MAX(CASE WHEN s.n_entrega = 6 THEN s.fec_programada END) AS E6_Programada,
     MAX(CASE WHEN s.n_entrega = 6 THEN s.fecha END) AS E6_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 6 THEN s.val_cod END), 0) AS E6_Validez,
     MAX(CASE WHEN s.n_entrega = 6 THEN s.registro END) AS E6_Registro,
-    MAX(CASE WHEN s.n_entrega = 7 THEN s.fec_programada END) AS E7_Programada,
     MAX(CASE WHEN s.n_entrega = 7 THEN s.fecha END) AS E7_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 7 THEN s.val_cod END), 0) AS E7_Validez,
     MAX(CASE WHEN s.n_entrega = 7 THEN s.registro END) AS E7_Registro,
-    MAX(CASE WHEN s.n_entrega = 8 THEN s.fec_programada END) AS E8_Programada,
     MAX(CASE WHEN s.n_entrega = 8 THEN s.fecha END) AS E8_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 8 THEN s.val_cod END), 0) AS E8_Validez,
     MAX(CASE WHEN s.n_entrega = 8 THEN s.registro END) AS E8_Registro,
-    MAX(CASE WHEN s.n_entrega = 9 THEN s.fec_programada END) AS E9_Programada,
     MAX(CASE WHEN s.n_entrega = 9 THEN s.fecha END) AS E9_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 9 THEN s.val_cod END), 0) AS E9_Validez,
     MAX(CASE WHEN s.n_entrega = 9 THEN s.registro END) AS E9_Registro,
-    MAX(CASE WHEN s.n_entrega = 10 THEN s.fec_programada END) AS E10_Programada,
     MAX(CASE WHEN s.n_entrega = 10 THEN s.fecha END) AS E10_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 10 THEN s.val_cod END), 0) AS E10_Validez,
     MAX(CASE WHEN s.n_entrega = 10 THEN s.registro END) AS E10_Registro,
-    MAX(CASE WHEN s.n_entrega = 11 THEN s.fec_programada END) AS E11_Programada,
     MAX(CASE WHEN s.n_entrega = 11 THEN s.fecha END) AS E11_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 11 THEN s.val_cod END), 0) AS E11_Validez,
     MAX(CASE WHEN s.n_entrega = 11 THEN s.registro END) AS E11_Registro,
-    MAX(CASE WHEN s.n_entrega = 12 THEN s.fec_programada END) AS E12_Programada,
     MAX(CASE WHEN s.n_entrega = 12 THEN s.fecha END) AS E12_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 12 THEN s.val_cod END), 0) AS E12_Validez,
     MAX(CASE WHEN s.n_entrega = 12 THEN s.registro END) AS E12_Registro,
-    MAX(CASE WHEN s.n_entrega = 13 THEN s.fec_programada END) AS E13_Programada,
     MAX(CASE WHEN s.n_entrega = 13 THEN s.fecha END) AS E13_Fecha,
     ISNULL(MAX(CASE WHEN s.n_entrega = 13 THEN s.val_cod END), 0) AS E13_Validez,
     MAX(CASE WHEN s.n_entrega = 13 THEN s.registro END) AS E13_Registro
 INTO #seg_res
 FROM #seg AS s
 GROUP BY s.id_episodio;
+
+/*=================== 3.1 FECHAS PROGRAMADAS DE LAS ENTREGAS QUE FALTAN ===================
+  Despues de la ultima entrega se proyectan las siguientes citas segun el metodo:
+  cada una = cita anterior + dias que protege la ultima entrega (trimestral 90, mensual 28,
+  condon 30, oral 28 x ciclos entregados). Se proyecta hasta completar la meta anual
+  (oral: mientras la cita caiga dentro del anio de seguimiento). Maximo E13.
+=======================================================================================*/
+IF OBJECT_ID('tempdb..#proy') IS NOT NULL DROP TABLE #proy;
+SELECT
+    r.id_episodio,
+    nn.k                                                                        AS n_entrega,
+    DATEADD(DAY, (nn.k - r.n_entregas) * CONVERT(INT, CEILING(u.cantidad * p.dias_x_unidad)),
+            r.fec_ultima)                                                       AS fec_programada
+INTO #proy
+FROM #seg_res AS r
+INNER JOIN #inicio       AS i ON i.id_episodio = r.id_episodio
+INNER JOIN #metodo_param AS p ON p.metodo = i.metodo
+INNER JOIN #seg          AS u ON u.id_episodio = r.id_episodio AND u.fecha = r.fec_ultima
+CROSS JOIN (VALUES (2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13)) AS nn(k)
+WHERE p.dias_x_unidad IS NOT NULL
+  AND nn.k > r.n_entregas
+  AND (   (p.usa_cantidad = 0 AND nn.k <= p.meta_anual)
+       OR (p.usa_cantidad = 1
+           AND DATEADD(DAY, (nn.k - r.n_entregas) * CONVERT(INT, CEILING(u.cantidad * p.dias_x_unidad)),
+                       r.fec_ultima) <= i.fec_fin_seg));
+
+/* Fechas programadas E2..E13: las de entregas realizadas y las proyectadas */
+IF OBJECT_ID('tempdb..#prog') IS NOT NULL DROP TABLE #prog;
+SELECT
+    x.id_episodio,
+    MAX(CASE WHEN x.n_entrega = 2 THEN x.fec_programada END) AS E2_Programada,
+    MAX(CASE WHEN x.n_entrega = 3 THEN x.fec_programada END) AS E3_Programada,
+    MAX(CASE WHEN x.n_entrega = 4 THEN x.fec_programada END) AS E4_Programada,
+    MAX(CASE WHEN x.n_entrega = 5 THEN x.fec_programada END) AS E5_Programada,
+    MAX(CASE WHEN x.n_entrega = 6 THEN x.fec_programada END) AS E6_Programada,
+    MAX(CASE WHEN x.n_entrega = 7 THEN x.fec_programada END) AS E7_Programada,
+    MAX(CASE WHEN x.n_entrega = 8 THEN x.fec_programada END) AS E8_Programada,
+    MAX(CASE WHEN x.n_entrega = 9 THEN x.fec_programada END) AS E9_Programada,
+    MAX(CASE WHEN x.n_entrega = 10 THEN x.fec_programada END) AS E10_Programada,
+    MAX(CASE WHEN x.n_entrega = 11 THEN x.fec_programada END) AS E11_Programada,
+    MAX(CASE WHEN x.n_entrega = 12 THEN x.fec_programada END) AS E12_Programada,
+    MAX(CASE WHEN x.n_entrega = 13 THEN x.fec_programada END) AS E13_Programada
+INTO #prog
+FROM (SELECT id_episodio, n_entrega, fec_programada FROM #seg
+      UNION ALL
+      SELECT id_episodio, n_entrega, fec_programada FROM #proy) AS x
+GROUP BY x.id_episodio;
 
 /*================================ 4. DATOS DEL SEGUIMIENTO =============================*/
 IF OBJECT_ID('tempdb..#nominal') IS NOT NULL DROP TABLE #nominal;
@@ -322,23 +358,24 @@ SELECT
     ul.metodo                                                                   AS ultimo_metodo,
     ul.fecha                                                                    AS fec_ultimo_metodo,
     r.E1_Fecha, r.E1_Registro,
-    r.E2_Programada, r.E2_Fecha, r.E2_Validez, r.E2_Registro,
-    r.E3_Programada, r.E3_Fecha, r.E3_Validez, r.E3_Registro,
-    r.E4_Programada, r.E4_Fecha, r.E4_Validez, r.E4_Registro,
-    r.E5_Programada, r.E5_Fecha, r.E5_Validez, r.E5_Registro,
-    r.E6_Programada, r.E6_Fecha, r.E6_Validez, r.E6_Registro,
-    r.E7_Programada, r.E7_Fecha, r.E7_Validez, r.E7_Registro,
-    r.E8_Programada, r.E8_Fecha, r.E8_Validez, r.E8_Registro,
-    r.E9_Programada, r.E9_Fecha, r.E9_Validez, r.E9_Registro,
-    r.E10_Programada, r.E10_Fecha, r.E10_Validez, r.E10_Registro,
-    r.E11_Programada, r.E11_Fecha, r.E11_Validez, r.E11_Registro,
-    r.E12_Programada, r.E12_Fecha, r.E12_Validez, r.E12_Registro,
-    r.E13_Programada, r.E13_Fecha, r.E13_Validez, r.E13_Registro
+    pp.E2_Programada, r.E2_Fecha, r.E2_Validez, r.E2_Registro,
+    pp.E3_Programada, r.E3_Fecha, r.E3_Validez, r.E3_Registro,
+    pp.E4_Programada, r.E4_Fecha, r.E4_Validez, r.E4_Registro,
+    pp.E5_Programada, r.E5_Fecha, r.E5_Validez, r.E5_Registro,
+    pp.E6_Programada, r.E6_Fecha, r.E6_Validez, r.E6_Registro,
+    pp.E7_Programada, r.E7_Fecha, r.E7_Validez, r.E7_Registro,
+    pp.E8_Programada, r.E8_Fecha, r.E8_Validez, r.E8_Registro,
+    pp.E9_Programada, r.E9_Fecha, r.E9_Validez, r.E9_Registro,
+    pp.E10_Programada, r.E10_Fecha, r.E10_Validez, r.E10_Registro,
+    pp.E11_Programada, r.E11_Fecha, r.E11_Validez, r.E11_Registro,
+    pp.E12_Programada, r.E12_Fecha, r.E12_Validez, r.E12_Registro,
+    pp.E13_Programada, r.E13_Fecha, r.E13_Validez, r.E13_Registro
 INTO #nominal
 FROM #inicio AS i
 INNER JOIN #metodo_param AS p ON p.metodo = i.metodo
 INNER JOIN #seg_res      AS r ON r.id_episodio = i.id_episodio
 INNER JOIN #seg          AS u ON u.id_episodio = i.id_episodio AND u.fecha = r.fec_ultima
+LEFT JOIN  #prog         AS pp ON pp.id_episodio = i.id_episodio
 OUTER APPLY (SELECT TOP 1 x.metodo, x.fecha
              FROM #entrega AS x
              WHERE x.num_doc = i.num_doc
