@@ -98,8 +98,8 @@ button:disabled{cursor:not-allowed}
 .reg{transform-box:fill-box;transform-origin:center}
 .reg>*{fill:var(--f,#fff);stroke:#222;stroke-width:1.5;stroke-linejoin:round;transition:fill .35s ease}
 .thumb .reg>*{stroke-width:2.2}
-.stage .reg>*{cursor:pointer}
-.stage .reg.done>*{cursor:default}
+.stage svg,.stage .reg>*{cursor:var(--brush,pointer)}
+.stage .reg.done>*{cursor:var(--brush,default)}
 @media (hover:hover){.stage .reg:not(.done):hover>*{stroke-width:2.6}}
 .reg.pop{animation:regpop .5s cubic-bezier(.3,1.7,.5,1)}
 @keyframes regpop{0%{transform:scale(.86)}100%{transform:scale(1)}}
@@ -133,17 +133,22 @@ button:disabled{cursor:not-allowed}
 .msg.show{animation:msgin .35s cubic-bezier(.3,1.6,.5,1)}
 @keyframes msgin{from{opacity:0;transform:translateY(6px) scale(.95)}}
 /* paleta siempre visible abajo */
-.dock{position:sticky;bottom:0;z-index:5;background:var(--panel);border-radius:22px 22px 0 0;padding:4px 10px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 14px rgba(0,0,0,.18)}
-.dock .cap{display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:13px;font-weight:800;padding:4px 6px 0}
-.palette{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:10px 2px 4px;scrollbar-width:thin;overscroll-behavior-x:contain}
-.sw{flex:1 0 62px;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 6px;border-radius:16px;background:var(--surf);border:3px solid transparent;min-width:0;transition:transform .25s cubic-bezier(.3,1.6,.5,1),background .2s,border-color .2s}
+/* paleta de pintor: tabla de madera con manchas de pintura */
+.dock{position:sticky;bottom:0;z-index:5;padding:6px 12px calc(10px + env(safe-area-inset-bottom,0px));border-radius:46px 70px 0 0/34px 46px 0 0;background:radial-gradient(120% 90% at 30% 0%,rgba(255,255,255,.28),transparent 60%),repeating-linear-gradient(100deg,rgba(120,70,25,.0) 0 14px,rgba(120,70,25,.12) 14px 16px,rgba(120,70,25,0) 16px 31px),linear-gradient(#e0ad73,#c98f55);border:3px solid #8a5a2b;border-bottom:0;box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 -4px 14px rgba(0,0,0,.2)}
+.dock::before{content:"";position:absolute;left:18px;top:10px;width:30px;height:24px;border-radius:50%;background:var(--bg);box-shadow:inset 0 3px 4px rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.4)}
+.dock .cap{display:flex;justify-content:space-between;align-items:center;color:#4a2c12;font-size:13px;font-weight:800;padding:6px 6px 0 52px;min-height:28px}
+.palette{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x proximity;padding:12px 4px 4px;scrollbar-width:thin;scrollbar-color:#8a5a2b transparent;overscroll-behavior-x:contain}
+.sw{flex:1 0 60px;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 2px 4px;border-radius:18px;min-width:0;transition:transform .25s cubic-bezier(.3,1.6,.5,1),background .2s}
 .sw:hover{transform:translateY(-2px)}
-.sw .dot{width:46px;height:46px;border-radius:50%;background:var(--c);color:var(--ci);display:grid;place-items:center;font:700 21px var(--font-d);border:3px solid rgba(0,0,0,.22);transition:transform .3s cubic-bezier(.3,1.6,.5,1),opacity .3s}
-.sw .left{font-size:12px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.sw[aria-pressed="true"]{border-color:var(--ink);background:var(--surf2);transform:translateY(-6px)}
-.sw[aria-pressed="true"] .dot{transform:scale(1.1)}
-.sw.done .dot{opacity:.5}
-.sw.done .left{color:var(--good)}
+.sw .dot{--b:58% 42% 55% 45%/52% 60% 40% 48%;width:52px;height:46px;border-radius:var(--b);background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.7) 0 9%,rgba(255,255,255,0) 26%),var(--c);color:var(--ci);display:grid;place-items:center;font:700 21px var(--font-d);text-shadow:0 1px 0 rgba(0,0,0,.15);box-shadow:inset 0 -5px 0 rgba(0,0,0,.16),inset 0 0 0 2px rgba(0,0,0,.12),0 3px 0 rgba(90,50,15,.45);transition:transform .3s cubic-bezier(.3,1.6,.5,1),opacity .3s,filter .3s}
+.sw:nth-child(3n+2) .dot{--b:45% 55% 40% 60%/58% 45% 55% 42%}
+.sw:nth-child(3n) .dot{--b:52% 48% 62% 38%/44% 56% 44% 56%}
+.sw .left{font-size:12px;font-weight:800;color:#4a2c12;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sw[aria-pressed="true"]{background:rgba(255,255,255,.38);transform:translateY(-6px)}
+.sw[aria-pressed="true"] .dot{transform:scale(1.12);box-shadow:inset 0 -5px 0 rgba(0,0,0,.16),0 0 0 3px #fff,0 0 0 6px #4a2c12;animation:wet 2.4s ease-in-out infinite}
+@keyframes wet{50%{border-radius:44% 56% 48% 52%/58% 42% 58% 42%}}
+.sw.done .dot{opacity:.55;filter:saturate(.55)}
+.sw.done .left{color:#1f6b2e}
 .sw.justdone .dot{animation:donepop .7s cubic-bezier(.3,1.6,.5,1)}
 @keyframes donepop{35%{transform:scale(1.4) rotate(-12deg);opacity:1}70%{transform:scale(.95) rotate(6deg)}}
 .sw.shake{animation:shake .45s}
@@ -707,8 +712,19 @@ function say(t){
 const swatch=n=>document.querySelector(`#pal .sw[data-n="${n}"]`);
 const regEl=i=>document.querySelector(`#stage .reg[data-i="${i}"]`);
 
+/* cursor de pincel con la punta del color elegido */
+const brushCache={};
+function brush(c){
+  if(!brushCache[c]){
+    const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M27.5 4.5L17.5 14.5' stroke='#3a2410' stroke-width='6.5' stroke-linecap='round'/><path d='M27.5 4.5L17.5 14.5' stroke='#c47a3a' stroke-width='4' stroke-linecap='round'/><path d='M18.5 13.5L14 18' stroke='#3a2410' stroke-width='7.5'/><path d='M18.5 13.5L14 18' stroke='#ced4da' stroke-width='5'/><path d='M13 14.6L17.4 19Q15 27 2.5 29.5Q5 17.5 13 14.6Z' fill='${c}' stroke='#222' stroke-width='1.4' stroke-linejoin='round'/><path d='M11 19Q8 22 6.5 26' stroke='rgba(255,255,255,.6)' stroke-width='1.3' fill='none' stroke-linecap='round'/></svg>`;
+    brushCache[c]=`url("data:image/svg+xml,${encodeURIComponent(svg)}") 3 29, pointer`;
+  }
+  return brushCache[c];
+}
+
 function refresh(){
   const d=cur(),set=painted(d.id),stage=$('#stage');
+  stage.style.setProperty('--brush',brush(d.colors[sel-1]));
   stage.querySelector('svg').classList.toggle('nonum',!showNum);
   d.regions.forEach((r,i)=>{
     const gEl=regEl(i),tx=stage.querySelector(`.num[data-i="${i}"]`);
