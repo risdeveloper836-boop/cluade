@@ -1,0 +1,777 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Pintar por Números</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;800&display=swap">
+<style>
+/* Layout: una columna estrecha tipo app de móvil. Inicio con categorías en tarjetas de color, luego dibujos, luego la hoja de pintar con paleta numerada abajo. */
+:root{
+  --bg:#b4dff0;
+  --panel:#4d6068;
+  --surf:#f3fafd;
+  --surf2:#ffffff;
+  --ink:#1c2b33;
+  --muted:#46606b;
+  --head:#a2479d;
+  --head2:#c06bbb;
+  --line:#2b3d46;
+  --good:#2f9e44;
+  --font-d:'Fredoka','Trebuchet MS',system-ui,sans-serif;
+  --font-b:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f2128;--panel:#2a3f48;--surf:#1a2d35;--surf2:#233b45;--ink:#e9f2f5;--muted:#a3bcc6;--head:#8a3d86;--head2:#a85aa3;--line:#6f8c98;--good:#51cf66;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f2128;--panel:#2a3f48;--surf:#1a2d35;--surf2:#233b45;--ink:#e9f2f5;--muted:#a3bcc6;--head:#8a3d86;--head2:#a85aa3;--line:#6f8c98;--good:#51cf66;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:600 15px/1.4 var(--font-b);padding-inline:16px;padding-block:18px 32px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.app{max-width:560px;margin-inline:auto;display:flex;flex-direction:column;gap:16px}
+.bar{display:flex;align-items:center;gap:10px;min-height:60px;background:var(--head);color:#fff;border-radius:30px;padding:6px 20px;box-shadow:0 4px 0 rgba(0,0,0,.22)}
+.bar.withback{padding-left:6px}
+.bar h1{flex:1;min-width:0;margin:0;text-align:center;font:600 clamp(18px,5.2vw,25px)/1.1 var(--font-d);text-transform:uppercase;letter-spacing:.04em;text-wrap:balance}
+.bar.withback h1{padding-right:48px}
+.back{flex:none;width:48px;height:48px;border-radius:50%;background:var(--head2);color:#fff;display:grid;place-items:center;border:3px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.2)}
+.lead{margin:0;text-align:center;text-wrap:balance}
+.panel{background:var(--panel);border-radius:22px;padding:14px;box-shadow:0 4px 0 rgba(0,0,0,.22)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.tile{position:relative;display:flex;flex-direction:column;gap:8px;padding:8px 8px 12px;border-radius:14px;background:var(--tc);color:var(--tt);text-align:center;box-shadow:0 4px 0 rgba(0,0,0,.28);transition:transform .12s}
+.tile:hover{transform:translateY(-2px)}
+.tile:active{transform:translateY(2px)}
+.tile .thumb{display:block;background:#fff;border:2px solid #111;aspect-ratio:1;min-width:0}
+.tile .thumb svg{display:block;width:100%;height:100%}
+.tile .lbl{font:600 clamp(14px,4.2vw,19px)/1.1 var(--font-d);text-transform:uppercase;letter-spacing:.03em;text-shadow:var(--ts)}
+.tile .sub{font-size:12px;font-weight:800;opacity:.92}
+.badge{position:absolute;top:2px;right:2px;width:30px;height:30px;border-radius:50%;background:var(--good);color:#fff;display:grid;place-items:center;border:3px solid #fff;font:700 16px var(--font-d)}
+.lvls{display:flex;flex-direction:column;gap:14px}
+.lvl{display:flex;align-items:center;gap:14px;padding:10px;border-radius:16px;background:var(--tc);color:var(--tt);text-align:left;box-shadow:0 4px 0 rgba(0,0,0,.28);transition:transform .12s;min-width:0}
+.lvl:hover:not(:disabled){transform:translateY(-2px)}
+.lvl:active:not(:disabled){transform:translateY(2px)}
+.lvl:disabled{cursor:not-allowed;filter:grayscale(.9);opacity:.7}
+.lvl .thumb{flex:none;width:92px;background:#fff;border:2px solid #111;aspect-ratio:1}
+.lvl .thumb svg{display:block;width:100%;height:100%}
+.lvl .txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.lvl .name{font:700 clamp(19px,5.4vw,25px)/1.1 var(--font-d);text-transform:uppercase;letter-spacing:.03em;text-shadow:var(--ts)}
+.lvl .tag{font-weight:800;font-size:14px}
+.lvl .prog2{font-weight:800;font-size:13px;opacity:.95}
+/* hoja de pintar */
+.stage{background:#fff;border-radius:16px;border:3px solid var(--panel);overflow:auto;aspect-ratio:1;max-width:100%;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.stage svg{display:block;width:100%;height:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.reg>*{fill:var(--f,#fff);stroke:#222;stroke-width:1.5;stroke-linejoin:round;transition:fill .25s}
+.thumb .reg>*{stroke-width:2.2}
+.stage .reg>*{cursor:pointer}
+.stage .reg.done>*{cursor:default}
+.dec{fill:none;stroke:#222;stroke-width:1.3;stroke-linecap:round;pointer-events:none}
+.thumb .dec{stroke-width:2}
+.num{font-family:var(--font-b);font-weight:800;fill:#222;text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:#fff;stroke-width:2.4px;stroke-linejoin:round}
+.num.hide,.nonum .num{display:none}
+.pulse>*{animation:pulse .5s ease 3}
+@keyframes pulse{50%{stroke:#e03131;stroke-width:4.5}}
+.prog{display:flex;align-items:center;gap:12px}
+.track{flex:1;height:16px;border-radius:99px;background:var(--surf2);border:2px solid var(--line);overflow:hidden}
+.track>div{height:100%;width:0;background:var(--good);border-radius:99px;transition:width .3s}
+.prog span{min-width:3.4em;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.msg{min-height:24px;margin:-4px 0;text-align:center;font-weight:800;text-wrap:balance}
+.palette{display:grid;grid-template-columns:repeat(var(--mc,4),minmax(0,1fr));gap:10px}
+@media (min-width:500px){.palette{grid-template-columns:repeat(var(--dc,8),minmax(0,1fr))}}
+.sw{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 6px;border-radius:16px;background:var(--surf);border:3px solid transparent;min-width:0}
+.sw .dot{width:46px;height:46px;border-radius:50%;background:var(--c);color:var(--ci);display:grid;place-items:center;font:700 21px var(--font-d);border:3px solid rgba(0,0,0,.22)}
+.sw .left{font-size:12px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.sw[aria-pressed="true"]{border-color:var(--ink);background:var(--surf2);transform:translateY(-3px)}
+.sw.done .dot{opacity:.5}
+.sw.done .left{color:var(--good)}
+.sw.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+.btn{padding:10px 16px;border-radius:14px;background:var(--surf);border:2px solid var(--line);font-weight:800;min-height:44px}
+.btn.pri{background:var(--head);border-color:var(--head);color:#fff}
+.btn.arm{background:#e03131;border-color:#e03131;color:#fff}
+.zoom{display:flex;align-items:center;gap:6px}
+.zoom .btn{padding-inline:14px;font-size:18px;line-height:1}
+.zoom output{min-width:3.2em;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}
+.switch{display:flex;align-items:center;gap:8px;min-height:44px;font-weight:800}
+.switch input{width:22px;height:22px;accent-color:var(--head)}
+/* pantalla final */
+.ov{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:16px;background:rgba(10,20,25,.62);overflow:hidden}
+.ov[hidden]{display:none}
+.card{position:relative;z-index:1;width:min(100%,360px);background:var(--surf);color:var(--ink);border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;align-items:stretch;text-align:center;box-shadow:0 8px 0 rgba(0,0,0,.25)}
+.card h2{margin:0;font:700 28px/1.1 var(--font-d);color:var(--head)}
+.card p{margin:0}
+.card .pv{background:#fff;border:3px solid var(--panel);border-radius:14px;aspect-ratio:1;width:70%;margin-inline:auto}
+.card .pv svg{display:block;width:100%;height:100%}
+.card .btn{width:100%}
+.conf{position:absolute;top:-20px;width:10px;height:16px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){
+  .conf{display:none}
+  .pulse>*,.sw.shake{animation:none}
+  .reg>*,.track>div,.tile{transition:none}
+}
+</style>
+
+<div class="app" id="app"></div>
+<div class="ov" id="ov" hidden></div>
+
+<script>
+/* ---------- ayudas para dibujar ---------- */
+const E=(cx,cy,rx,ry,rot)=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"${rot?` transform="rotate(${rot} ${cx} ${cy})"`:''}/>`;
+const C=(cx,cy,r)=>`<circle cx="${cx}" cy="${cy}" r="${r}"/>`;
+const P=p=>`<polygon points="${p}"/>`;
+const R=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`;
+const D=d=>`<path d="${d}"/>`;
+const ST=(cx,cy,r)=>{const p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;p.push((cx+q*Math.cos(a)).toFixed(1)+','+(cy+q*Math.sin(a)).toFixed(1));}return P(p.join(' '));};
+const g=(n,s,x,y,f=9)=>({n,s,x,y,f});
+
+/* ---------- dibujos: cada zona lleva su número y la posición del número ---------- */
+const petals=[0,60,120,180,240,300].map((th,k)=>{
+  const lab=[[100,43],[128,59],[128,91],[100,107],[72,91],[72,59]][k];
+  return g(k%2?4:3,`<ellipse cx="100" cy="47" rx="14" ry="24" transform="rotate(${th} 100 75)"/>`,lab[0],lab[1],9);
+});
+
+const RAYS=(cx,cy,r1,r2,w,cnt)=>[...Array(cnt)].map((_,k)=>{
+  const a=k*2*Math.PI/cnt,c=Math.cos(a),sn=Math.sin(a),f=n=>n.toFixed(1),lr=r1+(r2-r1)*.35;
+  return{pts:`${f(cx+r2*c)},${f(cy+r2*sn)} ${f(cx+r1*c-w*sn)},${f(cy+r1*sn+w*c)} ${f(cx+r1*c+w*sn)},${f(cy+r1*sn-w*c)}`,lx:cx+lr*c,ly:cy+lr*sn};
+});
+const sunRays=RAYS(100,80,40,64,9,8).map(r=>g(3,P(r.pts),r.lx,r.ly,7));
+const bunting=k=>g(k%2?12:11,P(`${10+k*30},6 ${34+k*30},6 ${22+k*30},26`),22+k*30,12,7);
+
+const DR=[
+{id:'pez',lvl:2,name:'Pez',
+ colors:['#8fd3f4','#ff9f1c','#e63946','#f4d58d','#caf0f8','#1d3557','#2a9d8f','#ffd60a'],
+ regions:[
+  g(1,R(0,0,200,200),22,112),
+  g(4,R(0,182,200,18),100,192),
+  g(7,E(168,168,9,28),168,168,8),
+  g(7,E(28,168,9,30),28,168,8),
+  g(3,P('146,100 186,66 186,134'),171,100),
+  g(3,P('78,70 104,42 126,72'),103,60,8),
+  g(3,P('88,128 112,152 122,128'),108,142,7),
+  g(2,E(95,100,55,35),125,124),
+  g(8,C(108,88,7)+C(122,108,6)+C(100,112,5),108,88,7),
+  g(6,C(66,92,8),66,92,8),
+  g(5,C(30,52,10),30,52,8),g(5,C(48,30,7),48,30,7),g(5,C(170,40,9),170,40,8)
+ ],
+ dec:['M42 106 Q50 111 56 105','M84 76 Q76 100 84 124']},
+
+{id:'mariposa',lvl:2,name:'Mariposa',
+ colors:['#cdeffd','#5c3d2e','#9b5de5','#f15bb5','#fee440','#00bbf9','#7bc96f','#ef476f'],
+ regions:[
+  g(1,R(0,0,200,200),20,30),
+  g(7,R(0,172,200,28),100,188),
+  g(4,E(76,132,28,22,-20),58,138,8),g(4,E(124,132,28,22,20),142,138,8),
+  g(3,E(68,78,42,28,25),42,68),g(3,E(132,78,42,28,-25),158,68),
+  g(5,C(66,76,9),66,76,8),g(5,C(134,76,9),134,76,8),
+  g(6,C(76,132,8),76,132,8),g(6,C(124,132,8),124,132,8),
+  g(2,E(100,100,7,42),100,100,8),
+  g(8,C(40,170,11),40,170,8),g(8,C(160,168,11),160,168,8)
+ ],
+ dec:['M97 60 Q90 46 82 40','M103 60 Q110 46 118 40']},
+
+{id:'flor',lvl:2,name:'Flor',
+ colors:['#bde0fe','#52b788','#ff85a1','#b185db','#ffd60a','#8b5e34','#ff9f1c','#ffffff'],
+ regions:[
+  g(1,R(0,0,200,200),20,100),
+  g(7,C(30,32,17),30,32),
+  g(8,E(158,36,26,10)+C(150,28,10)+C(168,26,12),158,38),
+  g(6,R(0,160,200,40),100,182),
+  g(2,R(96,100,8,64),100,152,8),
+  g(2,E(82,142,18,7,25),80,142,7),
+  g(2,E(118,130,18,7,-25),120,130,7),
+  ...petals,
+  g(5,C(100,75,15),100,75)
+ ],
+ dec:[]},
+
+{id:'paisaje',lvl:2,name:'Paisaje',
+ colors:['#a5d8ff','#ffd43b','#7b8fa6','#ffffff','#69b34c','#4dabf7','#2b6a3a','#8d5a2b'],
+ regions:[
+  g(1,R(0,0,200,200),28,22),
+  g(2,C(150,45,20),150,45),
+  g(3,P('70,132 125,70 200,132'),160,116),
+  g(3,P('0,132 55,50 112,132'),38,112),
+  g(4,P('55,50 41,73 50,67 58,76 66,67 72,73'),55,65,7),
+  g(4,P('125,70 109,89 118,83 125,92 133,83 148,89'),125,82,7),
+  g(5,D('M0 128 Q100 112 200 128 L200 200 L0 200Z'),62,186),
+  g(6,E(100,165,52,14),100,165),
+  g(8,R(22,158,7,18),25.5,168,6),
+  g(7,P('26,118 8,160 44,160'),26,147),
+  g(8,R(162,156,7,18),165.5,166,6),
+  g(7,P('166,114 146,158 186,158'),166,145)
+ ],
+ dec:[]},
+
+{id:'barco',lvl:2,name:'Barco',
+ colors:['#a9def9','#2d7dd2','#ef476f','#7f4f24','#ffd166','#ffafcc','#06d6a0','#ff9f1c'],
+ regions:[
+  g(1,R(0,0,200,200),160,40),
+  g(8,C(40,40,18),40,40),
+  g(2,R(0,132,200,68),30,172),
+  g(5,P('104,40 104,118 152,118'),126,104),
+  g(6,P('96,52 96,118 52,118'),80,106),
+  g(4,R(97,38,6,96),100,72,6),
+  g(7,P('103,38 103,52 124,45'),109,45,6),
+  g(3,P('42,126 158,126 138,164 62,164'),142,135,8),
+  g(4,C(76,146,5.5)+C(100,146,5.5)+C(124,146,5.5),100,146,7)
+ ],
+ dec:['M10 190 q8 -5 16 0 t16 0 t16 0','M130 182 q8 -5 16 0 t16 0 t16 0','M150 60 q5 -6 10 0 q5 -6 10 0']},
+
+{id:'cohete',lvl:2,name:'Cohete',
+ colors:['#1b1f4b','#9775fa','#e9ecef','#e63946','#74c0fc','#868e96','#ff922b','#ffe066'],
+ regions:[
+  g(1,R(0,0,200,200),25,112),
+  g(2,C(40,52,16),40,52),
+  g(3,C(165,58,12),165,58,8),
+  g(8,ST(150,112,10)+ST(26,150,8)+ST(172,150,7)+ST(62,22,7),150,112,6),
+  g(7,P('76,140 100,192 124,140'),86,152,7),
+  g(8,P('88,140 100,172 112,140'),100,153,8),
+  g(4,P('72,100 44,152 72,142'),62,138,8),
+  g(4,P('128,100 156,152 128,142'),138,138,8),
+  g(3,D('M100 22 C132 52 136 100 128 142 L72 142 C64 100 68 52 100 22Z'),100,128),
+  g(4,D('M100 22 C112.8 34 121.1 48.9 126.05 65.1 L73.95 65.1 C78.9 48.9 87.2 34 100 22Z'),100,54,8),
+  g(6,C(100,92,19),100,77,6),
+  g(5,C(100,92,12),100,92,8)
+ ],
+ dec:['M12 58 C30 70 58 62 68 44']},
+
+{id:'helado',lvl:2,name:'Helado',
+ colors:['#ffe3ec','#e9a96b','#ff8fab','#95e1d3','#e63946','#ffd60a','#4cc9f0','#b388eb'],
+ regions:[
+  g(1,R(0,0,200,200),30,150),
+  g(7,E(38,50,15,19),38,50),
+  g(8,E(164,42,15,19),164,42),
+  g(2,P('70,108 130,108 100,186'),100,134),
+  g(3,C(100,98,29),100,104),
+  g(4,C(100,66,26),100,64),
+  g(6,C(82,68,4.5)+C(114,54,4.5)+C(112,80,4.5),82,68,6),
+  g(5,C(100,36,8),100,36,8)
+ ],
+ dec:['M38 69 Q34 90 40 110','M164 61 Q168 85 160 105','M76.5 125 L110 160','M123.5 125 L90 160','M100 28 Q104 18 112 14']},
+
+{id:'cupcake',lvl:2,name:'Cupcake',
+ colors:['#cfe8ff','#b388eb','#ff8fab','#ffd6a5','#e63946','#2ec4b6','#4cc9f0','#ffd60a'],
+ regions:[
+  g(1,R(0,0,200,200),30,110),
+  g(8,ST(35,45,13)+ST(165,48,11)+ST(32,148,10),35,45,8),
+  g(7,E(100,176,72,10),50,176,8),
+  g(2,P('62,110 138,110 126,170 74,170'),100,142),
+  g(3,E(100,108,46,14),100,114,8),
+  g(4,E(100,88,36,14),100,89,8),
+  g(3,E(100,68,26,13),112,69,8),
+  g(5,C(100,48,9),100,48,8),
+  g(6,C(76,92,4.5)+C(126,90,4.5)+C(90,68,4.5),76,92,6)
+ ],
+ dec:['M78 112 L83 169','M92 112 L93 169','M108 112 L107 169','M122 112 L117 169']},
+
+/* ===== NIVEL 1: fácil ===== */
+{id:'sol',lvl:1,name:'Sol',
+ colors:['#a5d8ff','#ffd43b','#ff922b','#69b34c','#ffffff'],
+ regions:[
+  g(1,R(0,0,200,200),180,115),
+  ...sunRays,
+  g(2,C(100,80,34),100,80,12),
+  g(4,D('M0 172 Q100 128 200 172 L200 200 L0 200Z'),100,187),
+  g(5,E(24,24,18,7)+C(18,19,7)+C(30,17,8),24,26,7)
+ ],
+ dec:[]},
+
+{id:'casa',lvl:1,name:'Casa',
+ colors:['#a5d8ff','#f4a261','#e63946','#8d5a2b','#caf0f8','#69b34c','#ffd43b'],
+ regions:[
+  g(1,R(0,0,200,200),25,25),
+  g(7,C(165,35,16),165,35),
+  g(6,R(0,150,200,50),40,180),
+  g(2,R(50,90,100,65),100,99),
+  g(3,P('40,92 100,45 160,92'),100,78),
+  g(4,R(88,110,24,45),100,134),
+  g(5,R(60,105,20,20),70,115),
+  g(5,R(120,105,20,20),130,115)
+ ],
+ dec:[]},
+
+{id:'manzana',lvl:1,name:'Manzana',
+ colors:['#ffe8cc','#e63946','#52b788','#7f4f24','#ffffff'],
+ regions:[
+  g(1,R(0,0,200,200),25,25),
+  g(4,R(97,48,6,26),100,60,6),
+  g(3,E(122,50,20,9,-30),124,49,8),
+  g(2,D('M100 72 C80 52 42 62 48 108 C54 150 84 168 100 160 C116 168 146 150 152 108 C158 62 120 52 100 72Z'),125,125,10),
+  g(5,E(72,95,8,14,25),72,95,8)
+ ],
+ dec:[]},
+
+{id:'gato',lvl:1,name:'Gato',
+ colors:['#d0ebff','#ff9f1c','#ff8fab','#2a9d8f'],
+ regions:[
+  g(1,R(0,0,200,200),25,25),
+  g(2,P('52,92 58,40 98,70'),70,63,8),
+  g(2,P('148,92 142,40 102,70'),130,63,8),
+  g(2,C(100,120,50),100,154),
+  g(4,C(80,112,9)+C(120,112,9),80,112),
+  g(3,P('92,126 108,126 100,136'),100,129,6)
+ ],
+ dec:['M100 136 Q92 146 84 142','M100 136 Q108 146 116 142','M40 125 L70 128','M40 140 L70 136','M160 125 L130 128','M160 140 L130 136']},
+
+{id:'globos',lvl:1,name:'Globos',
+ colors:['#d0f4de','#e63946','#ffd60a','#4cc9f0','#69b34c'],
+ regions:[
+  g(1,R(0,0,200,200),20,30),
+  g(5,D('M0 170 Q100 140 200 170 L200 200 L0 200Z'),100,190),
+  g(2,E(55,80,26,34),55,80,10),
+  g(4,E(145,80,26,34),145,80,10),
+  g(3,E(100,65,26,34),100,65,10)
+ ],
+ dec:['M55 114 Q75 140 100 165','M100 99 L100 165','M145 114 Q125 140 100 165']},
+
+{id:'tortuga',lvl:1,name:'Tortuga',
+ colors:['#9be7ff','#4caf50','#a3d977','#f9a825','#f1d9a0'],
+ regions:[
+  g(1,R(0,0,200,200),20,30),
+  g(5,R(0,160,200,40),100,182),
+  g(3,E(68,148,12,9)+E(132,148,12,9),68,151,7),
+  g(3,R(42,135,116,10),100,140,7),
+  g(2,D('M42 135 C42 70 158 70 158 135Z'),56,128),
+  g(4,C(100,98,10)+C(72,112,8)+C(128,112,8),100,98),
+  g(3,C(162,115,17),162,115)
+ ],
+ dec:['M168 111 l0.1 0']},
+
+{id:'arbol',lvl:1,name:'Árbol',
+ colors:['#a5d8ff','#69b34c','#8d5a2b','#2b8a3e','#e63946'],
+ regions:[
+  g(1,R(0,0,200,200),20,40),
+  g(2,R(0,150,200,50),40,180),
+  g(3,R(88,100,24,60),100,145),
+  g(4,C(100,80,50),100,45,10),
+  g(5,C(75,70,7)+C(120,60,7)+C(100,95,7),75,70,7)
+ ],
+ dec:[]},
+
+{id:'mariquita',lvl:1,name:'Mariquita',
+ colors:['#b7e4a1','#e63946','#222222'],
+ regions:[
+  g(1,R(0,0,200,200),30,30),
+  g(2,C(100,115,50),88,120,10),
+  g(3,C(78,100,9)+C(122,100,9)+C(72,138,8)+C(128,138,8),78,100),
+  g(3,C(100,62,22),100,62,10)
+ ],
+ dec:['M100 80 V165','M92 42 Q86 28 78 24','M108 42 Q114 28 122 24']},
+
+/* ===== NIVEL 2: medio (más) ===== */
+{id:'buho',lvl:2,name:'Búho',
+ colors:['#2b2d6e','#6b4423','#a97142','#f4e2c5','#ffffff','#1b1b1b','#ff9f1c','#ffe066'],
+ regions:[
+  g(1,R(0,0,200,200),20,30),
+  g(8,C(165,40,16),165,40),
+  g(8,ST(30,70,8)+ST(175,95,6)+ST(150,16,5),30,70,6),
+  g(2,R(0,150,200,12),20,156,7),
+  g(3,P('62,72 70,48 86,66'),73,63,8),
+  g(3,P('138,72 130,48 114,66'),127,63,8),
+  g(3,E(100,110,42,50),66,108),
+  g(4,E(100,125,28,34),100,140,8),
+  g(5,C(84,85,16)+C(116,85,16),84,74,7),
+  g(6,C(84,85,7)+C(116,85,7),84,85,8),
+  g(7,P('94,98 106,98 100,114'),100,104,7),
+  g(7,E(88,154,8,5)+E(112,154,8,5),88,154,6)
+ ],
+ dec:[]},
+
+{id:'auto',lvl:2,name:'Auto',
+ colors:['#a5d8ff','#6c757d','#e63946','#caf0f8','#212529','#ced4da','#ffd60a','#ff9f1c'],
+ regions:[
+  g(1,R(0,0,200,200),150,45),
+  g(8,C(40,40,18),40,40),
+  g(2,R(0,150,200,50),30,182),
+  g(3,P('62,105 80,76 128,76 146,105'),103,92,8),
+  g(4,P('71,102 85,82 98,82 98,102'),88,93,8),
+  g(4,P('108,102 108,82 122,82 135,102'),118,93,8),
+  g(3,R(30,102,140,36),100,125),
+  g(5,C(65,140,17),65,127,7),
+  g(6,C(65,140,8),65,140,8),
+  g(5,C(135,140,17),135,127,7),
+  g(6,C(135,140,8),135,140,8),
+  g(7,C(166,114,6),166,114,7),
+  g(8,R(30,108,8,14),34,115,7)
+ ],
+ dec:[]},
+
+/* ===== NIVEL 3: difícil ===== */
+{id:'castillo',lvl:3,name:'Castillo',
+ colors:['#a5d8ff','#ffd43b','#ffffff','#69b34c','#adb5bd','#e03131','#7f4f24','#364fc7','#f783ac','#4dabf7','#e9c46a','#2d6a4f'],
+ regions:[
+  g(1,R(0,0,200,200),182,85),
+  g(2,C(165,32,14),165,32),
+  g(3,E(48,30,24,9)+C(40,24,9)+C(58,21,10),48,32,8),
+  g(4,D('M0 155 Q100 125 200 155 L200 200 L0 200Z'),150,172),
+  g(11,D('M88 165 L112 165 L140 200 L60 200Z'),100,186),
+  g(12,C(22,150,16)+C(180,148,16),22,150),
+  g(10,E(33,187,24,8)+E(168,187,24,8),33,187,7),
+  g(5,R(66,105,68,63),76,115),
+  g(5,R(40,80,28,88),54,125),
+  g(5,R(132,80,28,88),146,125),
+  g(5,R(84,60,32,50),100,75,8),
+  g(6,P('36,80 54,52 72,80'),54,72,8),
+  g(6,P('128,80 146,52 164,80'),146,72,8),
+  g(6,P('80,60 100,30 120,60'),100,52,8),
+  g(9,P('54,38 54,48 66,43'),58,43,6),
+  g(9,P('146,38 146,48 158,43'),150,43,6),
+  g(9,P('100,12 100,24 114,18'),104,18,6),
+  g(8,C(100,88,7),100,88,8),
+  g(8,R(50,98,8,16),54,106,7),
+  g(8,R(142,98,8,16),146,106,7),
+  g(7,D('M88 165 L88 135 A12 12 0 0 1 112 135 L112 165Z'),100,152)
+ ],
+ dec:['M22 166 V182','M180 164 V180','M54 52 V36','M146 52 V36','M100 30 V10']},
+
+{id:'mar',lvl:3,name:'Fondo del mar',
+ colors:['#7fd1f5','#f4d58d','#ff9f1c','#e63946','#ffd60a','#9b5de5','#2a9d8f','#ff6b9d','#f77f00','#1d3557','#e0fbff'],
+ regions:[
+  g(1,R(0,0,200,200),20,115),
+  g(2,D('M0 178 Q50 166 100 176 T200 172 L200 200 L0 200Z'),100,191),
+  g(7,E(22,150,8,30),22,150,8),
+  g(7,E(176,150,8,32),176,150,8),
+  g(8,D('M120 182 L120 150 Q120 140 128 140 Q136 140 136 150 L136 160 Q148 160 148 150 L148 135 Q148 126 156 126 Q164 126 164 135 L164 182Z'),128,168,8),
+  g(9,ST(55,175,14),55,176,7),
+  g(4,P('112,85 138,68 138,102'),130,85,8),
+  g(4,P('68,66 82,52 96,68'),82,61,7),
+  g(3,E(80,85,34,22),74,96),
+  g(10,C(62,80,6),62,80,8),
+  g(6,P('172,40 190,28 190,52'),184,40,7),
+  g(6,P('140,28 150,20 160,30'),150,27,6),
+  g(5,E(150,40,22,14),158,45,8),
+  g(10,C(137,37,4.5),137,37,6),
+  g(11,C(40,45,9),40,45,8),g(11,C(60,28,7),60,28,7),g(11,C(24,72,7),24,72,7)
+ ],
+ dec:['M96 72 Q90 85 96 98','M48 90 Q54 94 58 90']},
+
+{id:'granja',lvl:3,name:'Granja',
+ colors:['#a5d8ff','#6bbf59','#d62828','#7f4f24','#f1e3c8','#ffd43b','#ffffff','#b08968','#ff8fab','#adb5bd','#2d6a4f'],
+ regions:[
+  g(1,R(0,0,200,200),122,48),
+  g(6,C(165,28,15),165,28),
+  g(7,E(55,30,24,9)+C(47,24,9)+C(65,22,10),55,33,8),
+  g(2,D('M0 130 Q100 118 200 130 L200 200 L0 200Z'),155,186),
+  g(8,R(15,118,6,32),18,138,6),
+  g(11,C(18,100,20),18,98),
+  g(10,R(150,70,30,70),165,115),
+  g(4,D('M150 70 A15 15 0 0 1 180 70Z'),165,64,6),
+  g(3,R(40,90,90,60),54,125),
+  g(4,P('32,92 85,50 138,92'),58,84,8),
+  g(5,C(85,70,7),85,70,8),
+  g(5,R(70,110,30,40),85,116,8),
+  g(9,E(60,170,22,14),50,172,8),
+  g(9,C(86,166,10),86,166,8),
+  g(6,C(125,172,10),125,172,8)
+ ],
+ dec:['M70 110 L100 150','M100 110 L70 150']},
+
+{id:'tren',lvl:3,name:'Tren',
+ colors:['#a5d8ff','#69b34c','#e63946','#343a40','#868e96','#f1f3f5','#ffe066','#ffb703','#8d5a2b','#4361ee','#ff9f1c'],
+ regions:[
+  g(1,R(0,0,200,200),110,38),
+  g(8,C(168,32,16),168,32),
+  g(2,R(0,150,200,50),100,184),
+  g(9,R(0,158,200,8),190,162,6),
+  g(6,C(37,50,9)+C(46,36,11)+C(62,26,9),46,36,8),
+  g(3,R(20,95,70,40),45,115),
+  g(3,R(90,75,42,60),120,125),
+  g(4,R(86,68,50,10),111,73,7),
+  g(7,R(100,85,22,22),111,96,8),
+  g(4,R(30,70,14,25),37,84,7),
+  g(8,R(27,64,20,8),37,68,6),
+  g(8,D('M58 95 A8 8 0 0 1 74 95Z'),66,92,6),
+  g(8,P('20,128 2,150 20,150'),14,142,7),
+  g(10,R(138,100,56,36),166,118),
+  g(11,C(150,92,8)+C(166,92,8)+C(182,92,8),166,92,8),
+  g(5,C(38,142,14),38,142),
+  g(5,C(68,142,14),68,142),
+  g(5,C(112,142,14),112,142),
+  g(5,C(152,144,11),152,144,8),
+  g(5,C(182,144,11),182,144,8)
+ ],
+ dec:['M132 125 H138']},
+
+{id:'pastel',lvl:3,name:'Pastel',
+ colors:['#fff0f5','#9db4c0','#8b5a2b','#ff8fab','#fff3b0','#f8f9fa','#4cc9f0','#ffd60a','#ff7b00','#d00000','#9b5de5','#52b788'],
+ regions:[
+  g(1,R(0,0,200,200),20,135),
+  ...[0,1,2,3,4,5].map(bunting),
+  g(11,E(25,84,14,18),25,84,8),
+  g(12,E(175,84,14,18),175,84,8),
+  g(2,E(100,178,80,12),30,178,7),
+  g(3,R(45,138,110,38),60,162),
+  g(4,R(60,100,80,38),70,122),
+  g(5,R(75,66,50,34),90,84),
+  g(6,D('M60 100 q8 20 16 0 q8 20 16 0 q8 20 16 0 q8 20 16 0 q8 20 16 0 L60 100Z'),68,104,6),
+  g(6,D('M45 138 q11 20 22 0 q11 20 22 0 q11 20 22 0 q11 20 22 0 q11 20 22 0 L45 138Z'),56,142,6),
+  g(7,R(82,46,7,20),85.5,56,6),
+  g(8,R(96.5,40,7,26),100,53,6),
+  g(7,R(111,46,7,20),114.5,56,6),
+  g(9,E(85.5,38,4.5,7)+E(100,31,4.5,7)+E(114.5,38,4.5,7),100,31,6),
+  g(10,C(77,66,5)+C(123,66,5),77,66,6)
+ ],
+ dec:['M0 6 H200','M25 102 Q22 125 28 150','M175 102 Q178 125 172 150']}
+];
+DR.sort((a,b)=>a.lvl-b.lvl);
+
+const TS='0 2px 0 rgba(0,0,0,.3)';
+const LEVELS=[
+ {n:1,name:'Nivel 1',tag:'Fácil',txt:'pocos colores',c:'#86a81e',t:'#fff',s:TS},
+ {n:2,name:'Nivel 2',tag:'Medio',txt:'más zonas',c:'#f08a00',t:'#fff',s:TS},
+ {n:3,name:'Nivel 3',tag:'Difícil',txt:'hasta 12 colores',c:'#e0283e',t:'#fff',s:TS}
+];
+const NEED=3;
+const TILE_COLORS=[['#f5c400','#3a2d00','none'],['#e0283e','#fff',TS],['#3ea8d8','#fff',TS],['#f08a00','#fff',TS],['#86a81e','#fff',TS],['#b0449b','#fff',TS]];
+
+/* ---------- progreso guardado ---------- */
+let store={};
+try{store=JSON.parse(localStorage.getItem('pxn1')||'{}')||{}}catch(e){store={}}
+const save=()=>{try{localStorage.setItem('pxn1',JSON.stringify(store))}catch(e){}};
+const painted=id=>new Set(store[id]||[]);
+const isDone=d=>painted(d.id).size>=d.regions.length;
+const inLvl=n=>DR.filter(d=>d.lvl===n);
+const doneIn=n=>inLvl(n).filter(isDone).length;
+const maxLvl=()=>store._u||1;
+const unlocked=n=>n<=maxLvl();
+
+/* ---------- color ---------- */
+const rgb=h=>{const n=parseInt(h.slice(1),16);return[n>>16,n>>8&255,n&255]};
+const mix=(h,t)=>{const[r,g2,b]=rgb(h);const m=v=>Math.round(v*t+255*(1-t));return`rgb(${m(r)},${m(g2)},${m(b)})`};
+const ink=h=>{const[r,g2,b]=rgb(h);return(.299*r+.587*g2+.114*b)>160?'#1c2b33':'#fff'};
+
+/* ---------- svg de un dibujo ---------- */
+function svgFor(d,set,interactive){
+  const regs=d.regions.map((r,i)=>{
+    const col=set.has(i)?d.colors[r.n-1]:'';
+    return`<g class="reg${set.has(i)?' done':''}" data-i="${i}"${col?` style="--f:${col}"`:''}>${r.s}</g>`;
+  }).join('');
+  const nums=interactive?d.regions.map((r,i)=>`<text class="num${set.has(i)?' hide':''}" data-i="${i}" x="${r.x}" y="${r.y}" font-size="${r.f}">${r.n}</text>`).join(''):'';
+  const dec=d.dec.map(p=>`<path class="dec" d="${p}"/>`).join('');
+  return`<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" ${interactive?`role="img" aria-label="Dibujo de ${d.name} para pintar por números"`:'aria-hidden="true"'}>${regs}${dec}${nums}</svg>`;
+}
+const thumb=d=>svgFor(d,painted(d.id),false);
+
+/* ---------- estado de la interfaz ---------- */
+const $=s=>document.querySelector(s);
+const app=$('#app'),ov=$('#ov');
+const ZOOMS=[1,1.5,2,3];
+let view={name:'home'},sel=1,zi=0,showNum=true,resetArm=false,resetTimer=0,msgTimer=0,celebrated=false;
+const cur=()=>DR.find(d=>d.id===view.id);
+function go(v){view=v;ov.hidden=true;render();window.scrollTo(0,0)}
+
+const ARROW='<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function render(){
+  if(view.name==='home')renderHome();
+  else if(view.name==='lvl')renderLvl();
+  else renderPaint();
+}
+
+function renderHome(){
+  app.innerHTML=`
+  <div class="bar"><h1>Pintar por números</h1></div>
+  <p class="lead">Elige un nivel. Cada zona tiene un número: toca el color con ese número y pinta la zona.</p>
+  <div class="panel"><div class="lvls">${LEVELS.map(L=>{
+    const ds=inLvl(L.n),done=doneIn(L.n),open=unlocked(L.n),prev=LEVELS[L.n-2];
+    return`<button class="lvl" data-lvl="${L.n}" ${open?'':'disabled'} style="--tc:${L.c};--tt:${L.t};--ts:${L.s}"><span class="thumb">${thumb(ds[0])}</span><span class="txt"><span class="name">${L.name}</span><span class="tag">${L.tag}, ${L.txt}</span><span class="prog2">${open?`${done} de ${ds.length} terminados`:`Bloqueado: termina ${NEED} dibujos del ${prev.name}`}</span></span></button>`;
+  }).join('')}</div></div>`;
+}
+
+function renderLvl(){
+  const L=LEVELS[view.id-1],ds=inLvl(L.n);
+  app.innerHTML=`
+  <div class="bar withback"><button class="back" data-act="home" aria-label="Volver al inicio">${ARROW}</button><h1>${L.name} · ${L.tag}</h1></div>
+  <div class="panel"><div class="grid">${ds.map((d,i)=>{
+    const t=TILE_COLORS[i%TILE_COLORS.length],done=isDone(d),st=done?'Terminado':painted(d.id).size?'En progreso':'Sin empezar';
+    return`<button class="tile" data-draw="${d.id}" style="--tc:${t[0]};--tt:${t[1]};--ts:${t[2]}">${done?'<span class="badge" aria-label="Terminado">✓</span>':''}<span class="thumb">${thumb(d)}</span><span class="lbl">${d.name}</span><span class="sub">${st} · ${d.colors.length} colores</span></button>`;
+  }).join('')}</div></div>`;
+}
+
+function renderPaint(){
+  const d=cur(),set=painted(d.id);
+  zi=0;resetArm=false;celebrated=set.size>=d.regions.length;
+  const first=d.colors.findIndex((_,k)=>d.regions.some((r,i)=>r.n===k+1&&!set.has(i)));
+  sel=first<0?1:first+1;
+  app.innerHTML=`
+  <div class="bar withback"><button class="back" data-act="back" aria-label="Volver">${ARROW}</button><h1>${d.name}</h1></div>
+  <div class="stage" id="stage">${svgFor(d,set,true)}</div>
+  <div class="prog"><div class="track" id="track" role="progressbar" aria-label="Avance" aria-valuemin="0" aria-valuemax="100"><div id="fillbar"></div></div><span id="pct">0%</span></div>
+  <div class="msg" id="msg" role="status" aria-live="polite"></div>
+  <div class="palette" id="pal" style="--mc:${Math.min(d.colors.length,4)};--dc:${d.colors.length<=8?d.colors.length:6}">${d.colors.map((c,k)=>`<button class="sw" data-n="${k+1}" aria-pressed="false" aria-label="Color ${k+1}" style="--c:${c};--ci:${ink(c)}"><span class="dot">${k+1}</span><span class="left"></span></button>`).join('')}</div>
+  <div class="tools">
+    <button class="btn pri" data-act="hint">Pista</button>
+    <div class="zoom"><button class="btn" data-act="zout" aria-label="Alejar">−</button><output id="zv">100%</output><button class="btn" data-act="zin" aria-label="Acercar">+</button></div>
+    <label class="switch" for="shownum"><input type="checkbox" id="shownum" ${showNum?'checked':''}>Números</label>
+    <button class="btn" data-act="reset" id="resetbtn">Borrar todo</button>
+  </div>`;
+  refresh();
+}
+
+function say(t){
+  const m=$('#msg');if(!m)return;
+  m.textContent=t;clearTimeout(msgTimer);
+  msgTimer=setTimeout(()=>{m.textContent=''},2600);
+}
+
+function refresh(){
+  const d=cur(),set=painted(d.id),stage=$('#stage');
+  stage.querySelector('svg').classList.toggle('nonum',!showNum);
+  d.regions.forEach((r,i)=>{
+    const gEl=stage.querySelector(`.reg[data-i="${i}"]`),tx=stage.querySelector(`.num[data-i="${i}"]`);
+    const on=set.has(i);
+    gEl.classList.toggle('done',on);
+    gEl.style.setProperty('--f',on?d.colors[r.n-1]:(r.n===sel?mix(d.colors[sel-1],.32):'#fff'));
+    tx.classList.toggle('hide',on);
+  });
+  document.querySelectorAll('#pal .sw').forEach(b=>{
+    const n=+b.dataset.n,left=d.regions.filter((r,i)=>r.n===n&&!set.has(i)).length;
+    b.setAttribute('aria-pressed',n===sel?'true':'false');
+    b.classList.toggle('done',left===0);
+    b.querySelector('.left').textContent=left===0?'✓':'faltan '+left;
+  });
+  const pct=Math.round(set.size/d.regions.length*100);
+  $('#fillbar').style.width=pct+'%';
+  $('#track').setAttribute('aria-valuenow',pct);
+  $('#pct').textContent=pct+'%';
+  const z=ZOOMS[zi];
+  stage.querySelector('svg').style.width=(z*100)+'%';
+  $('#zv').textContent=Math.round(z*100)+'%';
+}
+
+function setZoom(k){
+  const stage=$('#stage');
+  zi=Math.max(0,Math.min(ZOOMS.length-1,k));
+  refresh();
+  stage.scrollLeft=(stage.scrollWidth-stage.clientWidth)/2;
+  stage.scrollTop=(stage.scrollHeight-stage.clientHeight)/2;
+}
+
+function hint(){
+  const d=cur(),set=painted(d.id),stage=$('#stage');
+  const open=n=>d.regions.map((r,i)=>i).filter(i=>!set.has(i)&&(n==null||d.regions[i].n===n));
+  let pool=open(sel);
+  if(!pool.length){
+    const any=open();
+    if(!any.length)return;
+    sel=d.regions[any[0]].n;refresh();pool=open(sel);
+  }
+  const i=pool[Math.floor(Math.random()*pool.length)];
+  const el=stage.querySelector(`.reg[data-i="${i}"]`);
+  const b=el.getBoundingClientRect(),s=stage.getBoundingClientRect();
+  if(b.left<s.left||b.right>s.right||b.top<s.top||b.bottom>s.bottom){
+    stage.scrollLeft+=(b.left+b.width/2)-(s.left+s.width/2);
+    stage.scrollTop+=(b.top+b.height/2)-(s.top+s.height/2);
+  }
+  el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),1600);
+  say(`Mira la zona que parpadea: lleva el número ${sel}.`);
+}
+
+function paint(i){
+  const d=cur(),set=painted(d.id),r=d.regions[i];
+  if(set.has(i)){say('Esa zona ya está pintada.');return}
+  if(r.n!==sel){
+    say(`Esa zona es el número ${r.n}. Elige el color ${r.n}.`);
+    const b=document.querySelector(`#pal .sw[data-n="${r.n}"]`);
+    if(b){b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake')}
+    return;
+  }
+  set.add(i);store[d.id]=[...set];save();refresh();
+  if(set.size>=d.regions.length&&!celebrated){celebrated=true;setTimeout(celebrate,450)}
+  else{
+    const left=d.regions.filter((q,k)=>q.n===sel&&!set.has(k)).length;
+    if(left===0){
+      const nx=d.colors.findIndex((_,k)=>d.regions.some((q,j)=>q.n===k+1&&!set.has(j)));
+      if(nx>=0){const prev=sel;sel=nx+1;refresh();say(`¡Color ${prev} completo! Sigue con el ${sel}.`)}
+    }
+  }
+}
+
+function nextOf(d){
+  const i=DR.indexOf(d);
+  for(let k=1;k<DR.length;k++){const q=DR[(i+k)%DR.length];if(unlocked(q.lvl)&&!isDone(q))return q}
+  return null;
+}
+
+function celebrate(){
+  const d=cur();
+  let note='';
+  if(doneIn(d.lvl)>=NEED&&d.lvl<LEVELS.length&&maxLvl()<d.lvl+1){store._u=d.lvl+1;save();note=`¡Desbloqueaste el ${LEVELS[d.lvl].name}!`}
+  const nxt=nextOf(d);
+  const cols=['#e0283e','#f5c400','#3ea8d8','#86a81e','#b0449b','#f08a00'];
+  let conf='';
+  for(let k=0;k<36;k++){conf+=`<span class="conf" style="left:${Math.random()*100}%;background:${cols[k%cols.length]};animation-duration:${2.2+Math.random()*2}s;animation-delay:${Math.random()*.8}s"></span>`}
+  ov.innerHTML=`${conf}<div class="card" role="dialog" aria-modal="true" aria-labelledby="ovt">
+    <h2 id="ovt">¡Muy bien!</h2>
+    <div class="pv">${svgFor(d,painted(d.id),false)}</div>
+    <p>Terminaste el dibujo: ${d.name}.</p>
+    ${note?`<p><strong>${note}</strong></p>`:''}
+    ${nxt?`<button class="btn pri" data-ov="next" data-id="${nxt.id}">Siguiente: ${nxt.name}</button>`:'<p>Ya pintaste todos los dibujos disponibles.</p>'}
+    <button class="btn${nxt?'':' pri'}" data-ov="menu">Elegir otro dibujo</button>
+    <button class="btn" data-ov="close">Seguir mirando</button>
+  </div>`;
+  ov.hidden=false;
+  const f=ov.querySelector('.btn.pri');if(f)f.focus();
+}
+
+/* ---------- eventos ---------- */
+app.addEventListener('click',e=>{
+  const reg=e.target.closest('.reg');
+  if(reg&&view.name==='paint'&&reg.closest('#stage')){paint(+reg.dataset.i);return}
+  const t=e.target.closest('[data-lvl],[data-draw],[data-act],[data-n]');
+  if(!t)return;
+  if(t.dataset.lvl){go({name:'lvl',id:+t.dataset.lvl});return}
+  if(t.dataset.draw){go({name:'paint',id:t.dataset.draw});return}
+  if(t.dataset.n){sel=+t.dataset.n;refresh();return}
+  switch(t.dataset.act){
+    case'home':go({name:'home'});break;
+    case'back':go({name:'lvl',id:cur().lvl});break;
+    case'hint':hint();break;
+    case'zin':setZoom(zi+1);break;
+    case'zout':setZoom(zi-1);break;
+    case'reset':{
+      const b=$('#resetbtn');
+      if(!resetArm){
+        resetArm=true;b.textContent='¿Seguro? Toca otra vez';b.classList.add('arm');
+        clearTimeout(resetTimer);
+        resetTimer=setTimeout(()=>{resetArm=false;b.textContent='Borrar todo';b.classList.remove('arm')},3200);
+      }else{
+        clearTimeout(resetTimer);resetArm=false;b.textContent='Borrar todo';b.classList.remove('arm');
+        const d=cur();store[d.id]=[];save();celebrated=false;sel=1;refresh();say('Dibujo borrado. ¡A pintar de nuevo!');
+      }
+      break;
+    }
+  }
+});
+app.addEventListener('change',e=>{
+  if(e.target.id==='shownum'){showNum=e.target.checked;refresh()}
+});
+ov.addEventListener('click',e=>{
+  const t=e.target.closest('[data-ov]');
+  if(!t){if(e.target===ov)ov.hidden=true;return}
+  if(t.dataset.ov==='next')go({name:'paint',id:t.dataset.id});
+  else if(t.dataset.ov==='menu')go({name:'lvl',id:cur().lvl});
+  else ov.hidden=true;
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!ov.hidden){ov.hidden=true;return}
+  if(view.name!=='paint'||!ov.hidden)return;
+  if(e.target.matches('input,textarea'))return;
+  const n=parseInt(e.key,10);
+  if(n>=1&&n<=cur().colors.length){sel=n;refresh()}
+});
+
+for(const L of LEVELS){
+  if(inLvl(L.n).some(d=>painted(d.id).size>0)&&maxLvl()<L.n)store._u=L.n;
+  if(doneIn(L.n)>=NEED&&L.n<LEVELS.length&&maxLvl()<L.n+1)store._u=L.n+1;
+}
+save();
+render();
+</script>
+
+</body></html>
