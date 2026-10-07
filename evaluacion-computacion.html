@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Evaluación de Computación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800&display=swap">
+<style>
+/* Examen para niños de 3 a 7 años: Paint y Windows, en tres niveles.
+   Inicio (nombre + nivel) → preguntas una por una → resultado con estrellas. */
+:root{
+  color-scheme:light;
+  --bg:#fff6d6;
+  --surf:#ffffff;
+  --ink:#2b2140;
+  --muted:#6d6385;
+  --head:#6c35a8;
+  --band:#ffe94d;
+  --line:#e5dcf5;
+  --good:#2f9e44;
+  --goodbg:#e3f8e6;
+  --bad:#e03131;
+  --badbg:#ffe5e5;
+  --sel:#2f80ed;
+  --font-d:'Fredoka','Trebuchet MS',system-ui,sans-serif;
+  --font-b:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);color:var(--ink);font:700 17px/1.35 var(--font-b);
+  min-height:100vh;-webkit-tap-highlight-color:transparent;
+  background-image:radial-gradient(#ffe7a3 2px,transparent 2.5px);background-size:28px 28px;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+[hidden]{display:none!important}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px 40px}
+
+/* Encabezado como la hoja impresa */
+.top{position:sticky;top:0;z-index:5}
+.top h1{margin:0;background:var(--head);color:#fff;text-align:center;font:700 clamp(22px,4vw,32px)/1.2 var(--font-d);padding:10px 56px;letter-spacing:.5px;position:relative}
+.top .sub{background:var(--band);color:#3b2a00;text-align:center;font:700 16px var(--font-d);padding:4px;letter-spacing:1px}
+.snd{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.18);border:0;border-radius:50%;width:42px;height:42px;font-size:22px;line-height:42px;padding:0}
+.home-btn{right:auto;left:10px}
+
+/* Inicio */
+.hero{text-align:center;margin:22px 0 8px}
+.hero .big{font-size:64px;line-height:1}
+.hero h2{font:700 28px var(--font-d);margin:8px 0 4px}
+.hero p{margin:0;color:var(--muted)}
+.name{display:flex;gap:10px;justify-content:center;align-items:center;margin:18px auto;flex-wrap:wrap}
+.name label{font:600 20px var(--font-d)}
+.name input{font:700 20px var(--font-b);padding:10px 14px;border-radius:14px;border:3px solid var(--line);width:min(320px,100%);background:#fff;color:var(--ink)}
+.name input:focus{outline:none;border-color:var(--head)}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:10px}
+.lvl{border:0;border-radius:24px;padding:18px 16px 16px;text-align:center;color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.18);transition:transform .12s}
+.lvl:hover{transform:translateY(-3px)}
+.lvl:active{transform:translateY(2px);box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.lvl .e{font-size:54px;line-height:1.1}
+.lvl .n{font:700 26px var(--font-d)}
+.lvl .a{display:inline-block;background:rgba(255,255,255,.25);border-radius:99px;padding:2px 12px;margin:4px 0 6px}
+.lvl .d{font-size:15px;opacity:.95}
+.lvl .best{margin-top:6px;font-size:20px;min-height:24px;letter-spacing:2px}
+.topics{margin-top:22px;background:var(--surf);border-radius:20px;padding:14px 18px;border:3px solid var(--line)}
+.topics summary{font:600 18px var(--font-d);cursor:pointer}
+.topics ul{margin:8px 0 0;padding-left:20px;color:var(--muted);columns:2 240px}
+
+/* Barra de progreso */
+.bar{display:flex;align-items:center;gap:12px;margin:16px 0 10px}
+.tag{border-radius:99px;padding:4px 14px;color:#fff;font:600 16px var(--font-d);white-space:nowrap}
+.prog{flex:1;height:16px;background:#fff;border-radius:99px;border:3px solid var(--line);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb636,#ff7aa2);transition:width .4s}
+.count{font:600 16px var(--font-d);color:var(--muted);white-space:nowrap}
+
+/* Tarjeta de pregunta */
+.card{background:var(--surf);border-radius:26px;padding:20px 18px 22px;box-shadow:0 6px 0 var(--line);border:3px solid var(--line)}
+.qhead{display:flex;gap:12px;align-items:flex-start}
+.qnum{flex:none;width:44px;height:44px;border-radius:50%;background:var(--head);color:#fff;display:grid;place-items:center;font:700 22px var(--font-d)}
+.qtext{flex:1;font:600 clamp(21px,3.4vw,27px)/1.25 var(--font-d);margin-top:4px}
+.qtext small{display:block;font:700 16px var(--font-b);color:var(--muted);margin-top:4px}
+.say{flex:none;border:0;background:#fff1c2;border-radius:50%;width:46px;height:46px;font-size:22px;padding:0}
+.qimg{display:flex;justify-content:center;margin:12px 0 0}
+.qimg svg{width:min(220px,60vw);height:auto}
+
+/* Opciones */
+.opts{display:grid;gap:14px;margin-top:18px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.opts.list{grid-template-columns:1fr}
+.opt{position:relative;border:4px solid var(--line);background:#fff;border-radius:22px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .1s,border-color .15s}
+.opt:hover:not(:disabled){border-color:#c7b6ee;transform:translateY(-2px)}
+.opt:disabled{cursor:default}
+.opts.list .opt{flex-direction:row;justify-content:flex-start;text-align:left;padding:12px 14px;gap:14px}
+.oic svg{width:96px;height:96px;display:block}
+.oic .emoji{font-size:80px;line-height:96px;display:block}
+.opts.list .oic svg{width:52px;height:52px}
+.opts.list .oic .emoji{font-size:44px;line-height:52px}
+.otxt{font:600 20px var(--font-d)}
+.letter{flex:none;width:36px;height:36px;border-radius:50%;background:#efe8fb;display:grid;place-items:center;font:700 19px var(--font-d);color:var(--head)}
+.opts:not(.list) .letter{position:absolute;left:10px;top:10px}
+kbd{display:inline-block;min-width:54px;padding:8px 12px;border-radius:10px;background:#f4f4f7;border:2px solid #9a9aa8;border-bottom-width:6px;font:700 20px var(--font-b);color:#333;text-align:center}
+.okbd{display:flex;align-items:center;gap:6px;font:700 20px var(--font-d)}
+.ohtml{font:400 30px Georgia,'Times New Roman',serif;color:#222;padding:6px 0}
+.opt.correct{border-color:var(--good);background:var(--goodbg)}
+.opt.wrong{border-color:var(--bad);background:var(--badbg);animation:shake .4s}
+.opt.correct::after,.opt.wrong::after{position:absolute;right:8px;top:6px;font-size:28px}
+.opt.correct::after{content:"✅"}
+.opt.wrong::after{content:"❌"}
+.opt.dim{opacity:.45}
+@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}}
+
+/* Arrastrar y soltar */
+.targets{display:grid;gap:14px;margin-top:18px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.targets.order{grid-template-columns:1fr}
+.target{display:flex;flex-direction:column;align-items:center;gap:8px}
+.targets.order .target{flex-direction:row}
+.tic svg{width:96px;height:96px;display:block}
+.tic.shadow svg{filter:brightness(0);opacity:.22}
+.tnum{flex:none;width:44px;height:44px;border-radius:50%;background:var(--band);display:grid;place-items:center;font:700 22px var(--font-d)}
+.slot{width:100%;min-height:58px;border:3px dashed #b9abd9;border-radius:16px;display:flex;align-items:center;justify-content:center;padding:4px;background:#faf7ff;transition:background .15s,border-color .15s}
+.slot.hot{background:#e8f1ff;border-color:var(--sel)}
+.slot.ready{border-style:solid}
+.slot.shadowslot{min-height:110px}
+.slot.correct{border:3px solid var(--good);background:var(--goodbg)}
+.slot.wrong{border:3px solid var(--bad);background:var(--badbg)}
+.fix{font-size:14px;color:var(--good);text-align:center}
+.pool{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:20px;padding:14px;border-radius:20px;background:#f6f1ff;min-height:84px}
+.chip{border:0;border-radius:16px;padding:12px 20px;font:600 21px var(--font-d);color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.2);touch-action:none;user-select:none;-webkit-user-select:none;text-shadow:0 1px 1px rgba(0,0,0,.25)}
+.chip.pic{background:#fff;border:3px solid var(--line);padding:6px}
+.chip.pic svg{width:84px;height:84px;display:block;pointer-events:none}
+.chip.step{background:#7e57c2;font-size:18px;text-align:left}
+.chip.sel{outline:4px solid var(--sel);outline-offset:3px}
+.slot .chip{box-shadow:none;width:100%}
+.ghost{position:fixed;z-index:50;pointer-events:none;transform:translate(-50%,-50%) scale(1.08) rotate(-3deg);opacity:.92}
+
+/* Retroalimentación */
+.fb{margin-top:18px;border-radius:18px;padding:12px 16px;font:600 21px var(--font-d);display:flex;align-items:center;gap:10px}
+.fb.ok{background:var(--goodbg);color:#1d6b2c}
+.fb.no{background:var(--badbg);color:#a51d1d}
+.fb.mid{background:#fff3cd;color:#7a5200}
+.fb .em{font-size:34px}
+.actions{display:flex;justify-content:center;gap:12px;margin-top:18px;flex-wrap:wrap}
+.btn{border:0;border-radius:18px;padding:14px 28px;font:600 22px var(--font-d);color:#fff;background:var(--head);box-shadow:0 5px 0 #3e1d66}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #3e1d66}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.green{background:#2f9e44;box-shadow:0 5px 0 #1b5e28}
+.btn.orange{background:#f08a24;box-shadow:0 5px 0 #a3560c}
+.btn.gray{background:#8a8aa0;box-shadow:0 5px 0 #55556b}
+
+/* Resultado */
+.res{text-align:center}
+.res .stars{font-size:clamp(56px,12vw,84px);letter-spacing:6px;margin:6px 0}
+.res .stars .off{filter:grayscale(1);opacity:.3}
+.res h2{font:700 32px var(--font-d);margin:4px 0}
+.res .score{font:600 22px var(--font-d);color:var(--muted)}
+.review{margin:18px 0 0;padding:0;list-style:none;text-align:left;display:grid;gap:8px}
+.review li{display:flex;gap:10px;align-items:center;background:#faf7ff;border-radius:14px;padding:8px 12px;font-size:16px}
+.review .m{font-size:22px;flex:none}
+.review .pt{margin-left:auto;color:var(--muted);flex:none}
+.meta{color:var(--muted);font-size:15px;margin-top:6px}
+.confetti{position:fixed;top:-40px;font-size:28px;z-index:60;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+
+@media (max-width:520px){
+  .top h1{font-size:18px;padding:12px 52px}
+  .oic svg,.tic svg{width:76px;height:76px}
+  .oic .emoji{font-size:64px;line-height:76px}
+  .opts,.targets{grid-template-columns:repeat(2,1fr)}
+  .opts.list,.targets.order{grid-template-columns:1fr}
+  .chip{font-size:18px;padding:10px 14px}
+  .chip.pic svg{width:64px;height:64px}
+  .card{padding:16px 12px 18px}
+}
+@media print{
+  body{background:#fff}
+  .top{position:static}
+  .snd,.actions,.confetti{display:none!important}
+  .card{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>
+    <button class="snd home-btn" id="homeBtn" title="Volver al inicio" hidden>🏠</button>
+    MI EXAMEN DE COMPUTACIÓN
+    <button class="snd" id="sndBtn" title="Leer en voz alta">🔊</button>
+  </h1>
+  <div class="sub">PAINT Y WINDOWS · EVALUACIÓN MENSUAL</div>
+</header>
+
+<main class="wrap">
+  <!-- Inicio -->
+  <section id="home">
+    <div class="hero">
+      <div class="big">🖥️🎨</div>
+      <h2>¡Hola! ¿Listo para jugar y aprender?</h2>
+      <p>Escribe tu nombre y elige tu nivel.</p>
+    </div>
+    <div class="name">
+      <label for="kid">Mi nombre:</label>
+      <input id="kid" autocomplete="off" maxlength="40" placeholder="Escribe tu nombre aquí">
+    </div>
+    <div class="levels" id="levels"></div>
+    <details class="topics">
+      <summary>📋 Temas que se evalúan (para el profesor)</summary>
+      <ul>
+        <li>Explora el programa Paint</li><li>Uso de línea y lápiz</li><li>Uso de elipse y rectángulo</li>
+        <li>Uso de polígono y texto</li><li>Uso de las ventanas de Paint</li><li>Uso de los botones de control</li>
+        <li>Aplica formatos de texto</li><li>Utiliza el resaltador de texto</li><li>Comando búsqueda de texto</li>
+        <li>Utiliza el teclado</li><li>Uso de la impresora</li><li>Explora el sistema operativo</li>
+        <li>Cambia el fondo de pantalla</li><li>Organiza el escritorio de Windows</li><li>Uso de las ventanas</li>
+        <li>Control de los botones de tamaño</li><li>Crea carpetas</li><li>Crea archivos en carpetas</li>
+      </ul>
+    </details>
+  </section>
+
+  <!-- Preguntas -->
+  <section id="quiz" hidden>
+    <div class="bar">
+      <span class="tag" id="qTag"></span>
+      <div class="prog"><i id="qProg"></i></div>
+      <span class="count" id="qCount"></span>
+    </div>
+    <div class="card" id="qCard"></div>
+  </section>
+
+  <!-- Resultado -->
+  <section id="result" hidden>
+    <div class="card res" id="resCard"></div>
+  </section>
+</main>
+
+<script>
+/* ---------- Dibujos (SVG 64×64) ---------- */
+const S = 'stroke-width="2.5" stroke-linejoin="round"';
+function teclado(){
+  let s = `<rect x="3" y="16" width="58" height="34" rx="5" fill="#eceff1" stroke="#37474f" ${S}/>`;
+  for (let r = 0; r < 2; r++) for (let c = 0; c < 7; c++)
+    s += `<rect x="${8 + c * 7}" y="${21 + r * 8}" width="5.5" height="5.5" rx="1" fill="#90a4ae"/>`;
+  return s + '<rect x="17" y="39" width="30" height="6" rx="1.5" fill="#90a4ae"/>';
+}
+const color = c => `<circle cx="32" cy="32" r="25" fill="${c}" stroke="rgba(0,0,0,.25)" stroke-width="3"/><circle cx="24" cy="23" r="6" fill="#fff" opacity=".45"/>`;
+const winBtn = inner => `<rect x="4" y="4" width="56" height="56" rx="8" fill="#eceff1" stroke="#455a64" stroke-width="3"/>${inner}`;
+const ICONS = {
+  lapiz: `<g transform="rotate(40 32 32)"><rect x="25" y="4" width="14" height="40" rx="2" fill="#ffb636" stroke="#5a3d1e" ${S}/><rect x="25" y="4" width="14" height="8" rx="2" fill="#ff7aa2" stroke="#5a3d1e" ${S}/><path d="M25 44 L39 44 L32 60 Z" fill="#f5d6a8" stroke="#5a3d1e" ${S}/><path d="M29.5 54 L34.5 54 L32 60 Z" fill="#333"/></g>`,
+  relleno: `<g transform="rotate(-25 28 36)"><path d="M12 24 H44 L40 56 Q28 60 16 56 Z" fill="#8ec5ff" stroke="#24476b" ${S}/><ellipse cx="28" cy="24" rx="16" ry="5" fill="#d9ecff" stroke="#24476b" stroke-width="2.5"/><path d="M14 24 Q28 2 42 24" fill="none" stroke="#24476b" stroke-width="2.5"/></g><path d="M52 30 Q60 44 56 50 A5 5 0 0 1 47 48 Q46 42 52 30 Z" fill="#2f80ed"/>`,
+  texto: `<text x="32" y="56" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="58" font-weight="700" fill="#6b5b95">A</text>`,
+  borrador: `<g transform="rotate(-30 32 34)"><rect x="6" y="22" width="52" height="22" rx="5" fill="#ff9ec4" stroke="#7a2e4f" stroke-width="2.5"/><rect x="6" y="22" width="20" height="22" rx="5" fill="#6fb6ff" stroke="#7a2e4f" stroke-width="2.5"/></g>`,
+  lupa: `<circle cx="26" cy="26" r="16" fill="#d8f3ff" stroke="#333" stroke-width="4"/><path d="M19 21 Q23 15 30 16" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M38 38 L56 56" stroke="#333" stroke-width="8" stroke-linecap="round"/>`,
+  pincel: `<path d="M8 54 Q20 40 36 46" fill="none" stroke="#e74c3c" stroke-width="6" stroke-linecap="round"/><g transform="rotate(45 38 30)"><rect x="34" y="2" width="8" height="30" rx="3" fill="#a0522d" stroke="#4a2511" stroke-width="2"/><rect x="33" y="30" width="10" height="6" fill="#c0c0c0" stroke="#555" stroke-width="2"/><path d="M33 36 H43 Q44 48 38 54 Q32 48 33 36Z" fill="#e74c3c" stroke="#7a1d14" stroke-width="2"/></g>`,
+  linea: `<line x1="10" y1="54" x2="54" y2="10" stroke="#333" stroke-width="5" stroke-linecap="round"/><circle cx="10" cy="54" r="5" fill="#2f80ed"/><circle cx="54" cy="10" r="5" fill="#2f80ed"/>`,
+  elipse: `<ellipse cx="32" cy="32" rx="27" ry="16" fill="#ffe08a" stroke="#c77d00" stroke-width="4"/>`,
+  circulo: `<circle cx="32" cy="32" r="24" fill="#ff8a80" stroke="#c0392b" stroke-width="4"/>`,
+  cuadrado: `<rect x="10" y="10" width="44" height="44" fill="#8fd694" stroke="#2e7d32" stroke-width="4"/>`,
+  rectangulo: `<rect x="5" y="16" width="54" height="32" fill="#90caf9" stroke="#1565c0" stroke-width="4"/>`,
+  triangulo: `<polygon points="32,8 58,54 6,54" fill="#ce93d8" stroke="#6a1b9a" stroke-width="4" stroke-linejoin="round"/>`,
+  estrella: `<polygon points="32,5 39,24 59,24 43,36 49,56 32,44 15,56 21,36 5,24 25,24" fill="#ffd54f" stroke="#f57f17" stroke-width="3" stroke-linejoin="round"/>`,
+  poligono: `<polygon points="32,6 55,19 55,45 32,58 9,45 9,19" fill="#80deea" stroke="#00838f" stroke-width="4" stroke-linejoin="round"/>`,
+  rojo: color('#e53935'), azul: color('#1e88e5'), amarillo: color('#fdd835'), verde: color('#43a047'),
+  teclado: teclado(),
+  impresora: `<rect x="16" y="6" width="32" height="18" fill="#fff" stroke="#37474f" ${S}/><rect x="6" y="22" width="52" height="22" rx="4" fill="#78909c" stroke="#37474f" ${S}/><rect x="16" y="38" width="32" height="20" fill="#fff" stroke="#37474f" ${S}/><line x1="21" y1="45" x2="43" y2="45" stroke="#90a4ae" stroke-width="2"/><line x1="21" y1="51" x2="38" y2="51" stroke="#90a4ae" stroke-width="2"/><circle cx="50" cy="29" r="2.5" fill="#76ff03"/>`,
+  mouse: `<rect x="18" y="8" width="28" height="48" rx="14" fill="#eceff1" stroke="#37474f" ${S}/><line x1="32" y1="8" x2="32" y2="28" stroke="#37474f" stroke-width="2.5"/><line x1="18" y1="28" x2="46" y2="28" stroke="#37474f" stroke-width="2.5"/><rect x="30" y="14" width="4" height="8" rx="2" fill="#37474f"/>`,
+  monitor: `<rect x="4" y="8" width="56" height="38" rx="3" fill="#37474f"/><rect x="8" y="12" width="48" height="30" fill="#4fc3f7"/><rect x="26" y="46" width="12" height="7" fill="#546e7a"/><rect x="18" y="53" width="28" height="4" rx="2" fill="#37474f"/>`,
+  carpeta: `<path d="M4 16 Q4 12 8 12 H24 L29 18 H56 Q60 18 60 22 V50 Q60 54 56 54 H8 Q4 54 4 50 Z" fill="#ffca28" stroke="#c49000" ${S}/><path d="M4 26 H60" stroke="#c49000" stroke-width="2"/>`,
+  archivo: `<path d="M14 4 H40 L52 16 V60 H14 Z" fill="#fff" stroke="#455a64" ${S}/><path d="M40 4 V16 H52" fill="#e3f2fd" stroke="#455a64" ${S}/><line x1="20" y1="28" x2="46" y2="28" stroke="#90a4ae" stroke-width="3"/><line x1="20" y1="36" x2="46" y2="36" stroke="#90a4ae" stroke-width="3"/><line x1="20" y1="44" x2="38" y2="44" stroke="#90a4ae" stroke-width="3"/>`,
+  papelera: `<rect x="12" y="12" width="40" height="6" rx="2" fill="#90a4ae" stroke="#37474f" ${S}/><rect x="26" y="6" width="12" height="6" rx="2" fill="none" stroke="#37474f" stroke-width="2.5"/><path d="M16 18 H48 L45 58 H19 Z" fill="#cfd8dc" stroke="#37474f" ${S}/><path d="M26 26 L27 50 M32 26 V50 M38 26 L37 50" stroke="#37474f" stroke-width="2.5"/>`,
+  btnMin: winBtn(`<line x1="18" y1="44" x2="46" y2="44" stroke="#263238" stroke-width="5" stroke-linecap="round"/>`),
+  btnMax: winBtn(`<rect x="18" y="18" width="28" height="28" fill="none" stroke="#263238" stroke-width="5"/>`),
+  btnCerrar: `<rect x="4" y="4" width="56" height="56" rx="8" fill="#e53935" stroke="#9b1c1c" stroke-width="3"/><path d="M20 20 L44 44 M44 20 L20 44" stroke="#fff" stroke-width="6" stroke-linecap="round"/>`,
+  ventana: `<rect x="2" y="6" width="60" height="52" rx="4" fill="#fff" stroke="#455a64" ${S}/><path d="M2 10 Q2 6 6 6 H58 Q62 6 62 10 V18 H2 Z" fill="#bbdefb" stroke="#455a64" ${S}/><rect x="8" y="10" width="14" height="4" rx="2" fill="#64b5f6"/><line x1="35" y1="14" x2="40" y2="14" stroke="#263238" stroke-width="2"/><rect x="44" y="9.5" width="5" height="5" fill="none" stroke="#263238" stroke-width="1.6"/><rect x="52" y="8" width="8" height="8" rx="1.5" fill="#e53935"/><path d="M54 10 L58 14 M58 10 L54 14" stroke="#fff" stroke-width="1.5"/><path d="M10 50 Q20 30 30 42 T52 34" fill="none" stroke="#ff7043" stroke-width="3" stroke-linecap="round"/><circle cx="46" cy="28" r="5" fill="#ffd54f"/>`,
+  escritorio: `<rect x="2" y="6" width="60" height="44" rx="3" fill="#263238"/><rect x="5" y="9" width="54" height="34" fill="#81d4fa"/><circle cx="48" cy="16" r="4" fill="#ffeb3b"/><path d="M5 43 Q18 26 32 36 Q44 28 59 38 V43 Z" fill="#66bb6a"/><rect x="8" y="12" width="6" height="5" rx="1" fill="#ffca28"/><rect x="8" y="20" width="6" height="5" rx="1" fill="#fff"/><rect x="8" y="28" width="6" height="5" rx="1" fill="#cfd8dc"/><rect x="5" y="40" width="54" height="3" fill="#1e3a5f"/><rect x="26" y="50" width="12" height="5" fill="#546e7a"/><rect x="18" y="55" width="28" height="4" rx="2" fill="#263238"/>`,
+  paint: `<path d="M32 6 C14 6 4 18 4 32 C4 46 16 58 30 58 C36 58 36 52 33 49 C30 46 32 42 37 42 H46 C55 42 60 36 60 28 C60 15 48 6 32 6 Z" fill="#fff3e0" stroke="#8d6e63" ${S}/><circle cx="18" cy="24" r="5" fill="#e53935"/><circle cx="30" cy="16" r="5" fill="#fdd835"/><circle cx="44" cy="18" r="5" fill="#43a047"/><circle cx="16" cy="40" r="5" fill="#1e88e5"/>`
+};
+function ic(name, cls = '') {
+  return ICONS[name] ? `<svg viewBox="0 0 64 64" class="${cls}" aria-hidden="true">${ICONS[name]}</svg>` : `<span class="emoji">${name}</span>`;
+}
+
+/* ---------- Preguntas ----------
+   choice: ok marca la correcta; ic = dibujo (nombre de ICONS o emoji), t = texto,
+           kbd = teclas, html = muestra con formato. img = dibujo grande arriba.
+   match:  arrastrar cada etiqueta a su dibujo. shadow = arrastrar el dibujo a su sombra.
+   order:  arrastrar los pasos a su número. */
+const LEVELS = [
+  {
+    id: 1, name: 'Nivel 1', age: '3 y 4 años', emoji: '🐣', color: '#f08a24',
+    desc: 'Mira y toca el dibujo correcto', autoRead: true,
+    qs: [
+      { type: 'choice', q: '¿Con cuál dibujamos?', opts: [{ ic: 'lapiz', t: 'Lápiz', ok: 1 }, { ic: '🍎', t: 'Manzana' }, { ic: '🚗', t: 'Carro' }] },
+      { type: 'choice', q: '¿Cuál es el borrador?', opts: [{ ic: 'borrador', t: 'Borrador', ok: 1 }, { ic: 'lapiz', t: 'Lápiz' }, { ic: 'lupa', t: 'Lupa' }] },
+      { type: 'choice', q: '¿Con cuál pintamos?', opts: [{ ic: 'pincel', t: 'Pincel', ok: 1 }, { ic: '⚽', t: 'Pelota' }, { ic: '🧸', t: 'Osito' }] },
+      { type: 'choice', q: 'Toca el color ROJO', opts: [{ ic: 'rojo', t: 'Rojo', ok: 1 }, { ic: 'azul', t: 'Azul' }, { ic: 'amarillo', t: 'Amarillo' }] },
+      { type: 'choice', q: '¿Cuál es el círculo?', opts: [{ ic: 'circulo', t: 'Círculo', ok: 1 }, { ic: 'cuadrado', t: 'Cuadrado' }, { ic: 'triangulo', t: 'Triángulo' }] },
+      { type: 'choice', q: '¿Cuál es el rectángulo?', opts: [{ ic: 'rectangulo', t: 'Rectángulo', ok: 1 }, { ic: 'circulo', t: 'Círculo' }, { ic: 'estrella', t: 'Estrella' }] },
+      { type: 'match', shadow: true, q: 'Arrastra cada dibujo a su sombra', pairs: [{ ic: 'lapiz', t: 'Lápiz' }, { ic: 'relleno', t: 'Relleno' }, { ic: 'borrador', t: 'Borrador' }] },
+      { type: 'choice', q: '¿Cuál es el teclado?', opts: [{ ic: 'teclado', t: 'Teclado', ok: 1 }, { ic: 'impresora', t: 'Impresora' }, { ic: 'mouse', t: 'Mouse' }] },
+      { type: 'choice', q: '¿Cuál es la impresora?', opts: [{ ic: 'impresora', t: 'Impresora', ok: 1 }, { ic: 'teclado', t: 'Teclado' }, { ic: 'monitor', t: 'Pantalla' }] },
+      { type: 'choice', q: 'Toca la carpeta', opts: [{ ic: 'carpeta', t: 'Carpeta', ok: 1 }, { ic: 'papelera', t: 'Papelera' }, { ic: '🚗', t: 'Carro' }] }
+    ]
+  },
+  {
+    id: 2, name: 'Nivel 2', age: '5 años', emoji: '🐥', color: '#2f9e44',
+    desc: 'Herramientas de Paint y la computadora', autoRead: true,
+    qs: [
+      { type: 'choice', q: 'Marca la respuesta correcta: El programa Paint se utiliza para…', opts: [{ ic: '👀', t: 'Ver imágenes' }, { ic: '✍️', t: 'Solo escribir' }, { ic: 'paint', t: 'Dibujar y pintar', ok: 1 }, { ic: '🎮', t: 'Para jugar' }] },
+      { type: 'match', q: 'Arrastra el nombre al dibujo que corresponde', pairs: [
+        { ic: 'lapiz', t: 'LÁPIZ', c: '#f08a24' }, { ic: 'relleno', t: 'RELLENO', c: '#43a047' }, { ic: 'texto', t: 'TEXTO', c: '#1e88e5' },
+        { ic: 'borrador', t: 'BORRADOR', c: '#8a8aa0' }, { ic: 'lupa', t: 'LUPA', c: '#f2b705' }, { ic: 'pincel', t: 'PINCEL', c: '#e53935' }] },
+      { type: 'choice', q: '¿Qué herramienta hace una LÍNEA recta?', opts: [{ ic: 'linea', t: 'Línea', ok: 1 }, { ic: 'relleno', t: 'Relleno' }, { ic: 'lupa', t: 'Lupa' }] },
+      { type: 'choice', q: 'Quiero pintar TODO el interior de mi dibujo. ¿Qué uso?', opts: [{ ic: 'relleno', t: 'Relleno', ok: 1 }, { ic: 'borrador', t: 'Borrador' }, { ic: 'texto', t: 'Texto' }] },
+      { type: 'choice', q: '¿Cuál es la ELIPSE (óvalo)?', opts: [{ ic: 'elipse', t: 'Elipse', ok: 1 }, { ic: 'rectangulo', t: 'Rectángulo' }, { ic: 'triangulo', t: 'Triángulo' }] },
+      { type: 'choice', q: '¿Cuál figura es un POLÍGONO?', sub: 'Tiene muchos lados rectos', opts: [{ ic: 'poligono', t: 'Hexágono', ok: 1 }, { ic: 'circulo', t: 'Círculo' }, { ic: 'elipse', t: 'Elipse' }] },
+      { type: 'choice', q: 'Para escribir mi nombre en Paint uso la herramienta…', opts: [{ ic: 'texto', t: 'Texto', ok: 1 }, { ic: 'pincel', t: 'Pincel' }, { ic: 'relleno', t: 'Relleno' }] },
+      { type: 'choice', q: 'La LUPA sirve para…', img: 'lupa', opts: [{ t: 'Ver el dibujo más grande', ok: 1 }, { t: 'Borrar el dibujo' }, { t: 'Pintar de colores' }] },
+      { type: 'match', q: 'Une cada parte de la computadora con su nombre', pairs: [
+        { ic: 'teclado', t: 'TECLADO', c: '#7e57c2' }, { ic: 'mouse', t: 'MOUSE', c: '#00897b' }, { ic: 'impresora', t: 'IMPRESORA', c: '#d81b60' }, { ic: 'monitor', t: 'PANTALLA', c: '#1e88e5' }] },
+      { type: 'choice', q: '¿Qué tecla deja un ESPACIO entre dos palabras?', opts: [{ kbd: 'Espacio', ok: 1 }, { kbd: 'Enter ↵' }, { kbd: '⌫ Borrar' }] },
+      { type: 'choice', q: 'La impresora sirve para…', img: 'impresora', opts: [{ ic: 'archivo', t: 'Sacar mi trabajo en papel', ok: 1 }, { ic: '🎵', t: 'Escuchar música' }, { ic: 'mouse', t: 'Mover la flechita' }] }
+    ]
+  },
+  {
+    id: 3, name: 'Nivel 3', age: '6 y 7 años', emoji: '🦉', color: '#1e88e5',
+    desc: 'Windows, ventanas, carpetas y texto', autoRead: false,
+    qs: [
+      { type: 'choice', q: '¿Qué es Windows?', opts: [{ t: 'Un sistema operativo: hace funcionar la computadora', ok: 1 }, { t: 'Un juego' }, { t: 'Una impresora' }] },
+      { type: 'choice', q: 'En una ventana, ¿qué botón la CIERRA?', img: 'ventana', hideText: true, opts: [{ ic: 'btnCerrar', t: 'Cerrar', ok: 1 }, { ic: 'btnMin', t: 'Minimizar' }, { ic: 'btnMax', t: 'Maximizar' }] },
+      { type: 'match', q: 'Botones de control: arrastra el nombre a su botón', pairs: [
+        { ic: 'btnMin', t: 'MINIMIZAR', c: '#7e57c2' }, { ic: 'btnMax', t: 'MAXIMIZAR', c: '#1e88e5' }, { ic: 'btnCerrar', t: 'CERRAR', c: '#e53935' }] },
+      { type: 'choice', q: '¿Qué botón hace la ventana MÁS GRANDE para que ocupe toda la pantalla?', opts: [{ ic: 'btnMax', t: 'Maximizar', ok: 1 }, { ic: 'btnMin', t: 'Minimizar' }, { ic: 'btnCerrar', t: 'Cerrar' }] },
+      { type: 'choice', q: '¿Qué es el fondo de pantalla?', img: 'escritorio', opts: [{ t: 'La imagen que se ve detrás de los iconos del escritorio', ok: 1 }, { t: 'Una carpeta con archivos' }, { t: 'Las teclas del teclado' }] },
+      { type: 'choice', q: 'Para cambiar el fondo de pantalla hago clic derecho en el escritorio y elijo…', opts: [{ t: 'Personalizar', ok: 1 }, { t: 'Imprimir' }, { t: 'Cerrar' }] },
+      { type: 'order', q: 'Ordena los pasos para CREAR UNA CARPETA', steps: ['Clic derecho en el escritorio', 'Elegir «Nuevo»', 'Elegir «Carpeta»', 'Escribir el nombre y presionar Enter'] },
+      { type: 'choice', q: '¿Dónde guardamos los archivos para tenerlos ordenados?', opts: [{ ic: 'carpeta', t: 'En una carpeta', ok: 1 }, { ic: 'papelera', t: 'En la papelera' }, { ic: 'impresora', t: 'En la impresora' }] },
+      { type: 'choice', q: 'Para ordenar los iconos del escritorio hago clic derecho y elijo…', opts: [{ t: 'Ordenar por', ok: 1 }, { t: 'Eliminar' }, { t: 'Apagar' }] },
+      { type: 'choice', q: '¿Cuál palabra está en NEGRITA?', opts: [{ html: '<b>Hola</b>', t: 'Negrita', ok: 1 }, { html: '<i>Hola</i>', t: 'Cursiva' }, { html: '<u>Hola</u>', t: 'Subrayado' }], hideText: true },
+      { type: 'choice', q: '¿Cuál palabra está RESALTADA?', sub: 'Como si la pintaras con un marcador', opts: [{ html: '<mark style="background:#ffeb3b">Casa</mark>', t: 'Resaltada', ok: 1 }, { html: '<u>Casa</u>', t: 'Subrayada' }, { html: '<span style="color:#e53935">Casa</span>', t: 'Color rojo' }], hideText: true },
+      { type: 'choice', q: '¿Qué botón usamos para BUSCAR una palabra en el texto?', opts: [{ ic: 'lupa', t: 'Buscar', ok: 1 }, { ic: 'impresora', t: 'Imprimir' }, { ic: '✂️', t: 'Cortar' }] },
+      { type: 'choice', q: '¿Qué teclas usamos para IMPRIMIR?', opts: [{ kbd: 'Ctrl + P', ok: 1 }, { kbd: 'Ctrl + Z' }, { kbd: 'Alt + F4' }] }
+    ]
+  }
+];
+
+/* ---------- Utilidades ---------- */
+const $ = id => document.getElementById(id);
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const plain = h => h.replace(/<[^>]+>/g, '');
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+let soundOn = store.get('evc-sound') !== false;
+function renderSoundBtn() { $('sndBtn').textContent = soundOn ? '🔊' : '🔇'; }
+$('sndBtn').onclick = () => { soundOn = !soundOn; store.set('evc-sound', soundOn); renderSoundBtn(); if (!soundOn && window.speechSynthesis) speechSynthesis.cancel(); };
+renderSoundBtn();
+
+function speak(text) {
+  if (!soundOn || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'es-ES'; u.rate = .9; u.pitch = 1.1;
+  const v = speechSynthesis.getVoices().find(v => /^es/i.test(v.lang));
+  if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+let actx;
+function beep(good) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const notes = good ? [660, 880, 1320] : [300, 220];
+    notes.forEach((f, i) => {
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i * .11;
+      o.type = good ? 'triangle' : 'sawtooth'; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.18, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + .18);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + .2);
+    });
+  } catch (e) {}
+}
+
+/* ---------- Inicio ---------- */
+let st = null;
+function renderHome() {
+  $('levels').innerHTML = LEVELS.map(L => {
+    const best = store.get('evc-best-' + L.id);
+    return `<button class="lvl" style="background:${L.color}" data-l="${L.id}">
+      <div class="e">${L.emoji}</div><div class="n">${L.name}</div><div class="a">${L.age}</div>
+      <div class="d">${L.desc}<br>${L.qs.length} preguntas</div>
+      <div class="best">${best ? '⭐'.repeat(best) : ''}</div></button>`;
+  }).join('');
+  show('home');
+}
+$('levels').onclick = e => {
+  const b = e.target.closest('.lvl'); if (!b) return;
+  const L = LEVELS.find(l => l.id == b.dataset.l);
+  st = { L, i: 0, score: 0, log: [], name: $('kid').value.trim(), start: new Date() };
+  store.set('evc-name', st.name);
+  renderQ();
+};
+$('kid').value = store.get('evc-name') || '';
+$('homeBtn').onclick = () => { if (!st || st.done || confirm('¿Salir del examen? Se perderán las respuestas.')) { if (window.speechSynthesis) speechSynthesis.cancel(); st = null; renderHome(); } };
+function show(id) {
+  document.querySelectorAll('.confetti').forEach(c => c.remove());
+  ['home', 'quiz', 'result'].forEach(s => $(s).hidden = s !== id);
+  $('homeBtn').hidden = id === 'home';
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Pregunta ---------- */
+function sayText(q, L) {
+  let s = q.q + (q.sub ? '. ' + q.sub : '');
+  if (q.type === 'choice' && L.id > 1 && !q.hideText) {
+    const o = q._opts || q.opts;
+    s += '. ' + o.map((x, i) => 'abcd'[i] + ': ' + (x.t || x.kbd || '')).join('. ');
+  }
+  return s;
+}
+function renderQ() {
+  const { L, i } = st, q = L.qs[i];
+  show('quiz');
+  $('qTag').textContent = L.emoji + ' ' + L.name;
+  $('qTag').style.background = L.color;
+  $('qProg').style.width = (i / L.qs.length * 100) + '%';
+  $('qCount').textContent = `${i + 1} de ${L.qs.length}`;
+  let body = '';
+  if (q.type === 'choice') body = choiceHTML(q);
+  else body = matchHTML(q);
+  $('qCard').innerHTML = `
+    <div class="qhead"><div class="qnum">${i + 1}</div>
+      <div class="qtext">${q.q}${q.sub ? `<small>${q.sub}</small>` : ''}</div>
+      <button class="say" id="sayBtn" title="Escuchar la pregunta">🔊</button></div>
+    ${q.img ? `<div class="qimg">${ic(q.img)}</div>` : ''}
+    ${body}
+    <div id="fb"></div>
+    <div class="actions" id="acts"></div>`;
+  $('sayBtn').onclick = () => { const was = soundOn; soundOn = true; speak(sayText(q, L)); soundOn = was; };
+  if (q.type === 'choice') bindChoice(q); else bindMatch(q);
+  if (L.autoRead) setTimeout(() => { if (st && st.L.qs[st.i] === q) speak(sayText(q, L)); }, 250);
+}
+
+function optHTML(o, i, letters, hideText) {
+  const vis = o.ic ? `<div class="oic">${ic(o.ic)}</div>`
+    : o.kbd ? `<div class="okbd">${o.kbd.split('+').map(k => `<kbd>${k.trim()}</kbd>`).join('<span>+</span>')}</div>`
+    : o.html ? `<div class="ohtml">${o.html}</div>` : '';
+  const txt = o.t && !hideText ? `<div class="otxt">${o.t}</div>` : '';
+  return `${letters ? `<span class="letter">${'abcd'[i]}</span>` : ''}${vis}${txt}`;
+}
+function choiceHTML(q) {
+  q._opts = shuffle(q.opts);
+  const list = q._opts.every(o => !o.ic && !o.kbd && !o.html) || (q._opts.length === 4 && st.L.id > 1);
+  const letters = st.L.id > 1;
+  return `<div class="opts ${list ? 'list' : ''}">${q._opts.map((o, i) =>
+    `<button class="opt" data-i="${i}">${optHTML(o, i, letters, q.hideText)}</button>`).join('')}</div>`;
+}
+function label(o) { return o.t || o.kbd || (o.html ? plain(o.html) : ''); }
+function bindChoice(q) {
+  const box = $('qCard').querySelector('.opts');
+  box.onclick = e => {
+    const b = e.target.closest('.opt'); if (!b || box.dataset.done) return;
+    box.dataset.done = 1;
+    const o = q._opts[b.dataset.i], ok = !!o.ok;
+    box.querySelectorAll('.opt').forEach((x, k) => {
+      x.disabled = true;
+      if (q._opts[k].ok) x.classList.add('correct');
+      else if (x === b) x.classList.add('wrong');
+      else x.classList.add('dim');
+    });
+    const right = q._opts.find(x => x.ok);
+    finish(ok ? 1 : 0, ok ? null : `La respuesta era: ${label(right)}`);
+  };
+}
+
+/* ---------- Arrastrar y soltar (ratón y pantallas táctiles) ---------- */
+function matchHTML(q) {
+  const order = q.type === 'order';
+  const items = order ? q.steps.map((s, k) => ({ key: k, t: s })) : q.pairs.map((p, k) => ({ ...p, key: k }));
+  const targets = order ? items : shuffle(items);
+  const chips = shuffle(items);
+  const chip = it => order ? `<button class="chip step" data-k="${it.key}">${it.t}</button>`
+    : q.shadow ? `<button class="chip pic" data-k="${it.key}" aria-label="${it.t}">${ic(it.ic)}</button>`
+    : `<button class="chip" data-k="${it.key}" style="background:${it.c || '#7e57c2'}">${it.t}</button>`;
+  return `<div class="targets ${order ? 'order' : ''}">${targets.map(it => `
+      <div class="target">
+        ${order ? `<div class="tnum">${it.key + 1}</div>` : `<div class="tic ${q.shadow ? 'shadow' : ''}">${ic(it.ic)}</div>`}
+        <div class="slot ${q.shadow ? 'shadowslot' : ''}" data-k="${it.key}"></div>
+      </div>`).join('')}</div>
+    <div class="pool" id="pool">${chips.map(chip).join('')}</div>`;
+}
+function bindMatch(q) {
+  const card = $('qCard'), pool = $('pool');
+  const acts = $('acts');
+  acts.innerHTML = `<button class="btn green" id="chk" disabled>✔ Revisar</button>`;
+  let sel = null, drag = null, done = false;
+
+  const slots = [...card.querySelectorAll('.slot')];
+  const refresh = () => {
+    slots.forEach(s => s.classList.toggle('ready', !!s.firstElementChild));
+    $('chk').disabled = slots.some(s => !s.firstElementChild);
+  };
+  const select = c => { if (sel) sel.classList.remove('sel'); sel = c; if (c) c.classList.add('sel'); };
+  const place = (c, slot) => {
+    if (slot.firstElementChild && slot.firstElementChild !== c) pool.appendChild(slot.firstElementChild);
+    slot.appendChild(c); select(null); refresh();
+  };
+
+  card.addEventListener('pointerdown', e => {
+    const c = e.target.closest('.chip'); if (!c || done) return;
+    e.preventDefault();
+    drag = { c, x: e.clientX, y: e.clientY, g: null, id: e.pointerId };
+  });
+  window.onpointermove = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.g && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 8) {
+      drag.g = drag.c.cloneNode(true); drag.g.classList.add('ghost'); drag.g.classList.remove('sel');
+      drag.g.style.width = drag.c.offsetWidth + 'px';
+      document.body.appendChild(drag.g); drag.c.style.opacity = .35;
+    }
+    if (drag.g) {
+      // desplazar la página si el dedo llega al borde (pantallas pequeñas)
+      if (e.clientY < 70) window.scrollBy(0, -14);
+      else if (e.clientY > innerHeight - 70) window.scrollBy(0, 14);
+      drag.g.style.left = e.clientX + 'px'; drag.g.style.top = e.clientY + 'px';
+      const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.slot');
+      slots.forEach(s => s.classList.toggle('hot', s === over));
+    }
+  };
+  window.onpointerup = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const { c, g } = drag; drag = null;
+    if (g) {
+      g.remove(); c.style.opacity = '';
+      slots.forEach(s => s.classList.remove('hot'));
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const slot = el?.closest('.slot');
+      if (slot) place(c, slot);
+      else if (el?.closest('#pool') && c.parentElement !== pool) { pool.appendChild(c); refresh(); }
+    } else {
+      // toque: seleccionar la etiqueta, o devolverla si ya estaba en una caja
+      const inSlot = c.parentElement.classList.contains('slot');
+      if (inSlot && sel && sel !== c) place(sel, c.parentElement);
+      else if (inSlot && !sel) { pool.appendChild(c); refresh(); }
+      else select(sel === c ? null : c);
+    }
+  };
+  card.addEventListener('click', e => {
+    if (done) return;
+    const slot = e.target.closest('.slot');
+    if (slot && sel && !e.target.closest('.chip')) place(sel, slot);
+  });
+
+  $('chk').onclick = () => {
+    done = true; select(null);
+    let good = 0;
+    slots.forEach(s => {
+      const c = s.firstElementChild, ok = c.dataset.k === s.dataset.k;
+      s.classList.add(ok ? 'correct' : 'wrong');
+      if (ok) good++;
+      else if (!q.shadow) {
+        const it = q.type === 'order' ? q.steps[s.dataset.k] : q.pairs[s.dataset.k].t;
+        s.insertAdjacentHTML('afterend', `<div class="fix">✔ ${it}</div>`);
+      }
+    });
+    pool.hidden = true;
+    const frac = good / slots.length;
+    finish(frac, frac === 1 ? null : `Acertaste ${good} de ${slots.length}`);
+  };
+}
+
+/* ---------- Avanzar ---------- */
+const PRAISE = ['¡Muy bien!', '¡Excelente!', '¡Genial!', '¡Súper!', '¡Lo lograste!'];
+function finish(points, msg) {
+  const q = st.L.qs[st.i];
+  st.score += points;
+  st.log.push({ q: q.q, points });
+  const kind = points === 1 ? 'ok' : points > 0 ? 'mid' : 'no';
+  const head = kind === 'ok' ? PRAISE[Math.floor(Math.random() * PRAISE.length)] : kind === 'mid' ? '¡Casi lo tienes!' : '¡Sigue intentando!';
+  $('fb').innerHTML = `<div class="fb ${kind}"><span class="em">${kind === 'ok' ? '🎉' : kind === 'mid' ? '👍' : '💪'}</span><span>${head}${msg ? '<br><small>' + msg + '</small>' : ''}</span></div>`;
+  beep(points === 1);
+  speak(head);
+  const last = st.i === st.L.qs.length - 1;
+  $('acts').innerHTML = `<button class="btn orange" id="next">${last ? 'Ver mi resultado 🏆' : 'Siguiente ➜'}</button>`;
+  $('next').onclick = () => { st.i++; last ? renderResult() : renderQ(); };
+  $('next').focus({ preventScroll: true });
+  $('fb').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ---------- Resultado ---------- */
+function renderResult() {
+  st.done = true;
+  window.onpointermove = window.onpointerup = null;
+  const { L, score, log, name } = st, total = L.qs.length, pct = score / total;
+  const stars = pct >= .85 ? 3 : pct >= .55 ? 2 : 1;
+  const prev = store.get('evc-best-' + L.id) || 0;
+  if (stars > prev) store.set('evc-best-' + L.id, stars);
+  const title = stars === 3 ? '¡Eres un campeón de la computadora!' : stars === 2 ? '¡Muy buen trabajo!' : '¡Buen intento! Practica un poquito más';
+  const fmt = n => Math.round(n * 10) / 10;
+  const nota = Math.round(pct * 20);
+  $('qProg').style.width = '100%';
+  show('result');
+  $('resCard').innerHTML = `
+    <div class="stars">${[1, 2, 3].map(k => `<span class="${k <= stars ? '' : 'off'}">⭐</span>`).join('')}</div>
+    <h2>${name ? name + ', ' : ''}${title}</h2>
+    <div class="score">${L.emoji} ${L.name} (${L.age}) · ${fmt(score)} de ${total} correctas · Nota: ${nota}/20</div>
+    <div class="meta">${st.start.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+    <ul class="review">${log.map((r, k) => `<li><span class="m">${r.points === 1 ? '✅' : r.points > 0 ? '🟡' : '❌'}</span><span>${k + 1}. ${r.q}</span><span class="pt">${fmt(r.points)}</span></li>`).join('')}</ul>
+    <div class="actions">
+      <button class="btn green" id="again">🔁 Otra vez</button>
+      <button class="btn" id="other">🏠 Otro nivel</button>
+      <button class="btn gray" id="print">🖨️ Imprimir</button>
+    </div>`;
+  $('again').onclick = () => { st = { L, i: 0, score: 0, log: [], name, start: new Date() }; renderQ(); };
+  $('other').onclick = () => { st = null; renderHome(); };
+  $('print').onclick = () => window.print();
+  speak((name ? name + ', ' : '') + title);
+  if (stars >= 2) confetti();
+}
+function confetti() {
+  const em = ['🎉', '⭐', '🎨', '🖌️', '✨', '🎈'];
+  for (let k = 0; k < 40; k++) {
+    const s = document.createElement('span');
+    s.className = 'confetti'; s.textContent = em[k % em.length];
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.animationDuration = 2.5 + Math.random() * 2.5 + 's';
+    s.style.animationDelay = Math.random() * 1.2 + 's';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 6500);
+  }
+}
+
+if ('speechSynthesis' in window) speechSynthesis.getVoices();
+renderHome();
+</script>
+</body>
+</html>
