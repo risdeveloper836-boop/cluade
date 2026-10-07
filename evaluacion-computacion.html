@@ -88,6 +88,9 @@ kbd{display:inline-block;min-width:56px;padding:8px 12px;border-radius:10px;back
 .target{display:flex;flex-direction:column;align-items:center;gap:8px}
 .tic svg{width:96px;height:96px;display:block}
 .tic.shadow svg{filter:brightness(0);opacity:.22}
+.tic .emoji{font-size:80px;line-height:96px;display:block}
+.fix svg{width:48px;height:48px;display:block}
+.fix .emoji{font-size:40px;line-height:48px}
 .slot{width:100%;min-height:60px;border:3px dashed #b9abd9;border-radius:16px;display:flex;align-items:center;justify-content:center;padding:4px;background:#faf7ff}
 .slot.hot{background:#e8f1ff;border-color:var(--sel)}
 .slot.big{min-height:110px}
@@ -100,6 +103,7 @@ kbd{display:inline-block;min-width:56px;padding:8px 12px;border-radius:10px;back
 .chip.pic svg{width:84px;height:84px;display:block;pointer-events:none}
 .chip.sel{outline:4px solid var(--sel);outline-offset:3px}
 .slot .chip{box-shadow:none;width:100%}
+.slot .chip.pic svg{margin:0 auto}
 .ghost{position:fixed;z-index:50;pointer-events:none;transform:translate(-50%,-50%) scale(1.08) rotate(-3deg);opacity:.92}
 
 .fb{margin-top:18px;border-radius:18px;padding:12px 16px;font-size:22px;display:flex;align-items:center;gap:10px}
@@ -126,6 +130,7 @@ kbd{display:inline-block;min-width:56px;padding:8px 12px;border-radius:10px;back
 @media (max-width:520px){
   .top h1{font-size:20px;padding:12px 64px}
   .oic svg,.tic svg{width:76px;height:76px}
+  .tic .emoji{font-size:64px;line-height:76px}
   .oic .emoji{font-size:64px;line-height:76px}
   .opts,.targets{grid-template-columns:repeat(2,1fr)}
   .opts.list{grid-template-columns:1fr}
@@ -187,6 +192,12 @@ const ICONS = {
   poligono: `<polygon points="32,6 55,19 55,45 32,58 9,45 9,19" fill="#80deea" stroke="#00838f" stroke-width="4" stroke-linejoin="round"/>`,
   seleccionar: `<rect x="6" y="10" width="46" height="38" fill="#e3f2fd" stroke="#1e88e5" stroke-width="3" stroke-dasharray="6 4"/><path d="M40 34 L58 42 L50 45 L47 53 Z" fill="#263238" stroke="#fff" stroke-width="1.5"/>`,
   grosor: `<line x1="8" y1="14" x2="56" y2="14" stroke="#333" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="28" x2="56" y2="28" stroke="#333" stroke-width="5" stroke-linecap="round"/><line x1="8" y1="46" x2="56" y2="46" stroke="#333" stroke-width="11" stroke-linecap="round"/>`,
+  garabato: `<path d="M6 42 Q14 14 22 36 T38 30 T58 22" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round"/>`,
+  trazo: `<path d="M8 44 Q22 16 36 36 T58 20" fill="none" stroke="#e53935" stroke-width="11" stroke-linecap="round"/>`,
+  letras: `<text x="32" y="44" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="30" font-weight="700" fill="#1e88e5">Abc</text>`,
+  corazon: `<path d="M32 56 C10 40 4 28 12 18 C18 10 28 12 32 20 C36 12 46 10 52 18 C60 28 54 40 32 56Z" fill="#fff" stroke="#333" stroke-width="3"/>`,
+  pintado: `<path d="M32 56 C10 40 4 28 12 18 C18 10 28 12 32 20 C36 12 46 10 52 18 C60 28 54 40 32 56Z" fill="#1e88e5" stroke="#0d47a1" stroke-width="3"/>`,
+  error: `<path d="M12 30 L32 12 L52 30 V54 H12 Z" fill="#fff8e1" stroke="#5d4037" stroke-width="3" stroke-linejoin="round"/><rect x="26" y="38" width="12" height="16" fill="#a1887f"/><path d="M14 20 Q22 4 28 22 T42 18 T56 32 T38 44" fill="none" stroke="#e53935" stroke-width="3.5" stroke-linecap="round"/>`,
   rojo: color('#e53935'), azul: color('#1e88e5'), amarillo: color('#fdd835'), verde: color('#43a047'),
   teclado: teclado(),
   papelera: `<rect x="12" y="12" width="40" height="6" rx="2" fill="#90a4ae" stroke="#37474f" ${S}/><rect x="26" y="6" width="12" height="6" rx="2" fill="none" stroke="#37474f" stroke-width="2.5"/><path d="M16 18 H48 L45 58 H19 Z" fill="#cfd8dc" stroke="#37474f" ${S}/><path d="M26 26 L27 50 M32 26 V50 M38 26 L37 50" stroke="#37474f" stroke-width="2.5"/>`,
@@ -203,45 +214,49 @@ function ic(name) {
 /* ---------- Preguntas ----------
    choice: ok = correcta; ic = dibujo (nombre de ICONS o emoji); t = texto; kbd = teclas;
            html = palabra con formato; hideText = no mostrar el nombre bajo el dibujo; img = dibujo grande arriba.
-   match:  arrastrar cada nombre a su dibujo (shadow: arrastrar el dibujo a su sombra). */
+   match:  arrastrar cada nombre a su dibujo; mode 'shadow' = el dibujo a su sombra,
+           mode 'rel' = el dibujo a lo que le corresponde (target).
+   noRead: nivel para niños que aún no leen: sin palabras en las respuestas y lectura automática. */
 const TOOLS6 = [
   { ic: 'lapiz', t: 'LÁPIZ', c: '#f08a24' }, { ic: 'relleno', t: 'RELLENO', c: '#43a047' }, { ic: 'texto', t: 'TEXTO', c: '#1e88e5' },
   { ic: 'borrador', t: 'BORRADOR', c: '#8a8aa0' }, { ic: 'lupa', t: 'LUPA', c: '#f2b705' }, { ic: 'pincel', t: 'PINCEL', c: '#e53935' }];
 const LEVELS = [
   {
-    id: 1, name: 'Nivel 1', age: '3 y 4 años', emoji: '🐣', color: '#f08a24', autoRead: true,
+    // 3 y 4 años: no saben leer → solo dibujos; la pregunta se escucha en voz alta
+    id: 1, name: 'Nivel 1', age: '3 y 4 años', emoji: '🐣', color: '#f08a24', noRead: true,
     qs: [
       { q: '¿Con cuál dibujamos?', opts: [{ ic: 'lapiz', t: 'Lápiz', ok: 1 }, { ic: '🍎', t: 'Manzana' }, { ic: '🚗', t: 'Carro' }] },
       { q: '¿Cuál es el borrador?', opts: [{ ic: 'borrador', t: 'Borrador', ok: 1 }, { ic: 'lapiz', t: 'Lápiz' }, { ic: 'lupa', t: 'Lupa' }] },
       { q: '¿Con cuál pintamos?', opts: [{ ic: 'pincel', t: 'Pincel', ok: 1 }, { ic: '⚽', t: 'Pelota' }, { ic: '🧸', t: 'Osito' }] },
       { q: '¿Cuál es el bote de pintura?', opts: [{ ic: 'relleno', t: 'Relleno', ok: 1 }, { ic: 'borrador', t: 'Borrador' }, { ic: '🍌', t: 'Plátano' }] },
       { q: '¿Cuál es la lupa?', opts: [{ ic: 'lupa', t: 'Lupa', ok: 1 }, { ic: 'pincel', t: 'Pincel' }, { ic: 'lapiz', t: 'Lápiz' }] },
-      { q: 'Toca el color ROJO', opts: [{ ic: 'rojo', t: 'Rojo', ok: 1 }, { ic: 'azul', t: 'Azul' }, { ic: 'amarillo', t: 'Amarillo' }] },
-      { q: 'Toca el color AMARILLO', opts: [{ ic: 'amarillo', t: 'Amarillo', ok: 1 }, { ic: 'verde', t: 'Verde' }, { ic: 'rojo', t: 'Rojo' }] },
-      { q: '¿Cuál es el círculo?', opts: [{ ic: 'circulo', t: 'Círculo', ok: 1 }, { ic: 'rectangulo', t: 'Rectángulo' }, { ic: 'triangulo', t: 'Triángulo' }] },
-      { q: '¿Cuál es el rectángulo?', opts: [{ ic: 'rectangulo', t: 'Rectángulo', ok: 1 }, { ic: 'circulo', t: 'Círculo' }, { ic: 'triangulo', t: 'Triángulo' }] },
-      { type: 'match', shadow: true, q: 'Arrastra cada dibujo a su sombra', pairs: [{ ic: 'lapiz', t: 'Lápiz' }, { ic: 'relleno', t: 'Relleno' }, { ic: 'borrador', t: 'Borrador' }] }
+      { q: 'Toca el color rojo', opts: [{ ic: 'rojo', t: 'Rojo', ok: 1 }, { ic: 'azul', t: 'Azul' }, { ic: 'amarillo', t: 'Amarillo' }] },
+      { q: '¿Cuál es el círculo? Es redondo como una pelota', opts: [{ ic: 'circulo', t: 'Círculo', ok: 1 }, { ic: 'rectangulo', t: 'Rectángulo' }, { ic: 'triangulo', t: 'Triángulo' }] },
+      { type: 'match', mode: 'rel', q: 'Lleva cada color a su dibujo', pairs: [{ ic: 'rojo', t: 'Rojo', target: '🍓' }, { ic: 'amarillo', t: 'Amarillo', target: '🍌' }, { ic: 'verde', t: 'Verde', target: '🐸' }] },
+      { type: 'match', mode: 'shadow', q: 'Lleva cada dibujo a su sombra', pairs: [{ ic: 'lapiz', t: 'Lápiz' }, { ic: 'relleno', t: 'Relleno' }, { ic: 'borrador', t: 'Borrador' }] },
+      { type: 'match', mode: 'shadow', q: 'Lleva cada figura a su sombra', pairs: [{ ic: 'circulo', t: 'Círculo' }, { ic: 'rectangulo', t: 'Rectángulo' }, { ic: 'triangulo', t: 'Triángulo' }] }
     ]
   },
   {
-    id: 2, name: 'Nivel 2', age: '5 años', emoji: '🐥', color: '#2f9e44', autoRead: true,
+    // 5 años: tampoco leen todavía → dibujos, sombras y relaciones
+    id: 2, name: 'Nivel 2', age: '5 años', emoji: '🐥', color: '#2f9e44', noRead: true,
     qs: [
-      { q: 'El programa Paint se utiliza para…', opts: [{ ic: '👀', t: 'Ver imágenes' }, { ic: '✍️', t: 'Solo escribir' }, { ic: 'paleta', t: 'Dibujar y pintar', ok: 1 }, { ic: '🎮', t: 'Para jugar' }] },
-      { type: 'match', q: 'Arrastra el nombre al dibujo que corresponde', pairs: TOOLS6 },
-      { q: '¿Qué herramienta hace una LÍNEA recta?', opts: [{ ic: 'linea', t: 'Línea', ok: 1 }, { ic: 'relleno', t: 'Relleno' }, { ic: 'lupa', t: 'Lupa' }] },
-      { q: 'Quiero pintar TODO el interior de mi dibujo. ¿Qué uso?', opts: [{ ic: 'relleno', t: 'Relleno', ok: 1 }, { ic: 'borrador', t: 'Borrador' }, { ic: 'texto', t: 'Texto' }] },
-      { q: 'Me equivoqué en mi dibujo. ¿Con qué lo quito?', opts: [{ ic: 'borrador', t: 'Borrador', ok: 1 }, { ic: 'pincel', t: 'Pincel' }, { ic: 'relleno', t: 'Relleno' }] },
-      { q: '¿Cuál es la ELIPSE (óvalo)?', opts: [{ ic: 'elipse', t: 'Elipse', ok: 1 }, { ic: 'rectangulo', t: 'Rectángulo' }, { ic: 'triangulo', t: 'Triángulo' }] },
-      { q: '¿Cuál figura es un POLÍGONO? Tiene muchos lados rectos.', opts: [{ ic: 'poligono', t: 'Polígono', ok: 1 }, { ic: 'circulo', t: 'Círculo' }, { ic: 'elipse', t: 'Elipse' }] },
-      { q: 'Para escribir mi nombre en Paint uso…', opts: [{ ic: 'texto', t: 'Texto', ok: 1 }, { ic: 'pincel', t: 'Pincel' }, { ic: 'relleno', t: 'Relleno' }] },
-      { q: 'La LUPA sirve para…', img: 'lupa', opts: [{ t: 'Ver el dibujo más grande', ok: 1 }, { t: 'Borrar el dibujo' }, { t: 'Pintar de colores' }] },
-      { q: '¿Dónde elijo los colores en Paint?', opts: [{ ic: 'paleta', t: 'Paleta de colores', ok: 1 }, { ic: 'teclado', t: 'Teclado' }, { ic: 'papelera', t: 'Papelera' }] },
-      { type: 'match', q: 'Arrastra el nombre a cada figura', pairs: [
-        { ic: 'linea', t: 'LÍNEA', c: '#455a64' }, { ic: 'elipse', t: 'ELIPSE', c: '#f08a24' }, { ic: 'rectangulo', t: 'RECTÁNGULO', c: '#1e88e5' }, { ic: 'poligono', t: 'POLÍGONO', c: '#00897b' }] }
+      { type: 'match', mode: 'shadow', q: 'Lleva cada herramienta de Paint a su sombra', pairs: TOOLS6 },
+      { type: 'match', mode: 'rel', q: 'Une cada herramienta con lo que hace', pairs: [
+        { ic: 'lapiz', t: 'Lápiz', target: 'garabato' }, { ic: 'pincel', t: 'Pincel', target: 'trazo' }, { ic: 'relleno', t: 'Relleno', target: 'pintado' }, { ic: 'texto', t: 'Texto', target: 'letras' }] },
+      { q: 'Quiero pintar todo el corazón de azul. ¿Qué uso?', img: 'corazon', opts: [{ ic: 'relleno', t: 'Relleno', ok: 1 }, { ic: 'borrador', t: 'Borrador' }, { ic: 'lupa', t: 'Lupa' }] },
+      { q: 'Me equivoqué en mi dibujo. ¿Con qué lo borro?', img: 'error', opts: [{ ic: 'borrador', t: 'Borrador', ok: 1 }, { ic: 'pincel', t: 'Pincel' }, { ic: 'relleno', t: 'Relleno' }] },
+      { q: '¿Con cuál herramienta hago una línea recta?', opts: [{ ic: 'linea', t: 'Línea', ok: 1 }, { ic: 'relleno', t: 'Relleno' }, { ic: 'lupa', t: 'Lupa' }] },
+      { q: '¿Con cuál veo mi dibujo más grande?', opts: [{ ic: 'lupa', t: 'Lupa', ok: 1 }, { ic: 'borrador', t: 'Borrador' }, { ic: 'lapiz', t: 'Lápiz' }] },
+      { q: '¿Con cuál escribo mi nombre?', opts: [{ ic: 'texto', t: 'Texto', ok: 1 }, { ic: 'pincel', t: 'Pincel' }, { ic: 'relleno', t: 'Relleno' }] },
+      { q: '¿Dónde elijo los colores para pintar?', opts: [{ ic: 'paleta', t: 'Paleta de colores', ok: 1 }, { ic: 'teclado', t: 'Teclado' }, { ic: 'papelera', t: 'Papelera' }] },
+      { q: '¿Cuál es la elipse? Es como un huevo acostado', opts: [{ ic: 'elipse', t: 'Elipse', ok: 1 }, { ic: 'rectangulo', t: 'Rectángulo' }, { ic: 'triangulo', t: 'Triángulo' }] },
+      { q: '¿Cuál es el polígono? Tiene muchos lados', opts: [{ ic: 'poligono', t: 'Polígono', ok: 1 }, { ic: 'circulo', t: 'Círculo' }, { ic: 'elipse', t: 'Elipse' }] },
+      { type: 'match', mode: 'shadow', q: 'Lleva cada figura a su sombra', pairs: [{ ic: 'elipse', t: 'Elipse' }, { ic: 'rectangulo', t: 'Rectángulo' }, { ic: 'triangulo', t: 'Triángulo' }, { ic: 'poligono', t: 'Polígono' }] }
     ]
   },
   {
-    id: 3, name: 'Nivel 3', age: '6 y 7 años', emoji: '🦉', color: '#1e88e5', autoRead: false,
+    id: 3, name: 'Nivel 3', age: '6 y 7 años', emoji: '🦉', color: '#1e88e5',
     qs: [
       { q: '¿Qué es Paint?', opts: [{ t: 'Un programa para dibujar y pintar', ok: 1 }, { t: 'Un programa para escuchar música' }, { t: 'Una parte de la impresora' }] },
       { type: 'match', q: 'Arrastra el nombre a su herramienta', pairs: TOOLS6 },
@@ -313,7 +328,7 @@ function start(L) { st = { L, i: 0, score: 0 }; renderQ(); }
 
 function sayText(q, L) {
   let s = q.q;
-  if (q.opts && L.id > 1 && !q.hideText) s += '. ' + q._opts.map(o => o.t || o.kbd).join('. ');
+  if (q.opts && !L.noRead && !q.hideText) s += '. ' + q._opts.map(o => o.t || o.kbd).join('. ');
   return s;
 }
 function renderQ() {
@@ -326,12 +341,12 @@ function renderQ() {
   $('qCard').innerHTML = `
     <div class="qhead"><div class="qtext">${q.q}</div><button class="say" id="sayBtn" title="Escuchar">🔊</button></div>
     ${q.img ? `<div class="qimg">${ic(q.img)}</div>` : ''}
-    ${q.type === 'match' ? matchHTML(q) : choiceHTML(q)}
+    ${q.type === 'match' ? matchHTML(q) : choiceHTML(q, L)}
     <div id="fb"></div>
     <div class="actions" id="acts"></div>`;
   $('sayBtn').onclick = () => speak(sayText(q, L));
   if (q.type === 'match') bindMatch(q); else bindChoice(q);
-  if (L.autoRead) setTimeout(() => { if (st && st.L.qs[st.i] === q) speak(sayText(q, L)); }, 250);
+  if (L.noRead) setTimeout(() => { if (st && st.L.qs[st.i] === q) speak(sayText(q, L)); }, 250);
 }
 
 /* ---------- Opción múltiple ---------- */
@@ -341,11 +356,11 @@ function optHTML(o, hideText) {
     : o.html ? `<div class="ohtml">${o.html}</div>` : '';
   return vis + (o.t && !hideText ? `<div class="otxt">${o.t}</div>` : '');
 }
-function choiceHTML(q) {
+function choiceHTML(q, L) {
   q._opts = shuffle(q.opts);
   const list = q._opts.every(o => !o.ic && !o.kbd && !o.html) || q._opts.length === 4;
   return `<div class="opts ${list ? 'list' : ''}">${q._opts.map((o, i) =>
-    `<button class="opt" data-i="${i}">${optHTML(o, q.hideText)}</button>`).join('')}</div>`;
+    `<button class="opt" data-i="${i}">${optHTML(o, q.hideText || L.noRead)}</button>`).join('')}</div>`;
 }
 function bindChoice(q) {
   const box = $('qCard').querySelector('.opts');
@@ -358,20 +373,21 @@ function bindChoice(q) {
       x.classList.add(q._opts[k].ok ? 'correct' : x === b ? 'wrong' : 'dim');
     });
     const right = q._opts.find(x => x.ok);
-    finish(ok ? 1 : 0, ok ? '' : `La respuesta era: ${right.t || right.kbd}`);
+    finish(ok ? 1 : 0, ok ? '' : `La respuesta era: ${right.t || right.kbd}`, ok ? '' : `Era: ${right.t}`);
   };
 }
 
 /* ---------- Arrastrar y soltar (ratón y pantallas táctiles; también se puede tocar y luego tocar la caja) ---------- */
 function matchHTML(q) {
   const items = q.pairs.map((p, k) => ({ ...p, key: k }));
-  const chip = it => q.shadow
+  const pic = q.mode === 'shadow' || q.mode === 'rel';
+  const chip = it => pic
     ? `<button class="chip pic" data-k="${it.key}" aria-label="${it.t}">${ic(it.ic)}</button>`
     : `<button class="chip" data-k="${it.key}" style="background:${it.c}">${it.t}</button>`;
   return `<div class="targets">${shuffle(items).map(it => `
       <div class="target">
-        <div class="tic ${q.shadow ? 'shadow' : ''}">${ic(it.ic)}</div>
-        <div class="slot ${q.shadow ? 'big' : ''}" data-k="${it.key}"></div>
+        <div class="tic ${q.mode === 'shadow' ? 'shadow' : ''}">${ic(q.mode === 'rel' ? it.target : it.ic)}</div>
+        <div class="slot ${pic ? 'big' : ''}" data-k="${it.key}"></div>
       </div>`).join('')}</div>
     <div class="pool" id="pool">${shuffle(items).map(chip).join('')}</div>`;
 }
@@ -401,8 +417,8 @@ function bindMatch(q) {
     }
     if (drag.g) {
       // desplazar la página si el dedo llega al borde (pantallas pequeñas)
-      if (e.clientY < 70) window.scrollBy(0, -14);
-      else if (e.clientY > innerHeight - 70) window.scrollBy(0, 14);
+      if (e.clientY < 40) window.scrollBy(0, -12);
+      else if (e.clientY > innerHeight - 40) window.scrollBy(0, 12);
       drag.g.style.left = e.clientX + 'px'; drag.g.style.top = e.clientY + 'px';
       const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.slot');
       slots.forEach(s => s.classList.toggle('hot', s === over));
@@ -438,7 +454,10 @@ function bindMatch(q) {
       const ok = s.firstElementChild.dataset.k === s.dataset.k;
       s.classList.add(ok ? 'correct' : 'wrong');
       if (ok) good++;
-      else if (!q.shadow) s.insertAdjacentHTML('afterend', `<div class="fix">✔ ${q.pairs[s.dataset.k].t}</div>`);
+      else {
+        const it = q.pairs[s.dataset.k];
+        s.insertAdjacentHTML('afterend', `<div class="fix">${q.mode ? ic(it.ic) : '✔ ' + it.t}</div>`);
+      }
     });
     pool.hidden = true;
     finish(good / slots.length, good === slots.length ? '' : `Acertaste ${good} de ${slots.length}`);
@@ -447,13 +466,13 @@ function bindMatch(q) {
 
 /* ---------- Avanzar y resultado ---------- */
 const PRAISE = ['¡Muy bien!', '¡Excelente!', '¡Genial!', '¡Súper!'];
-function finish(points, msg) {
+function finish(points, msg, say) {
   st.score += points;
   const kind = points === 1 ? 'ok' : points > 0 ? 'mid' : 'no';
   const head = kind === 'ok' ? PRAISE[Math.floor(Math.random() * PRAISE.length)] : kind === 'mid' ? '¡Casi!' : '¡Sigue intentando!';
   $('fb').innerHTML = `<div class="fb ${kind}"><span class="em">${kind === 'ok' ? '🎉' : kind === 'mid' ? '👍' : '💪'}</span><span>${head}${msg ? '<br><small>' + msg + '</small>' : ''}</span></div>`;
   beep(points === 1);
-  speak(head);
+  speak(head + (st.L.noRead && say ? '. ' + say : ''));
   const last = st.i === st.L.qs.length - 1;
   $('acts').innerHTML = `<button class="btn orange" id="next">${last ? 'Ver mis estrellas ⭐' : 'Siguiente ➜'}</button>`;
   $('next').onclick = () => { st.i++; last ? renderResult() : renderQ(); };
