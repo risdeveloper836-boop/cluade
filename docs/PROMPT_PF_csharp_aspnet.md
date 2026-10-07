@@ -22,6 +22,7 @@ QUÉ NECESITO
      @edad_min    INT  (15)
      @edad_max    INT  (49)
      @tol_valida  INT  (5)              ± días para que una entrega sea válida
+     @gracia_busqueda INT (5)           la siguiente entrega se busca desde programada − estos días
    - Quitar USE y los DECLARE/SET de parámetros; mantener SET NOCOUNT ON y las tablas
      temporales. Crear el SP con SET ANSI_NULLS ON y SET QUOTED_IDENTIFIER ON.
    - NO cambiar la lógica ni los nombres de columnas de salida.
@@ -68,10 +69,16 @@ REGLAS DE NEGOCIO (las implementa el SQL; sirven para entender y probar)
   en el periodo (DNI, 15-49 años).
 - Seguimiento: desde el inicio hasta inicio + 364 días. E1 = inicio; E2..E13 = siguientes
   entregas del mismo método dentro de ese año.
+- Entregas muy juntas: la siguiente entrega se busca desde (fecha programada −
+  @gracia_busqueda), es decir trimestral ≥ 85 días, mensual ≥ 23, condón ≥ 25, oral ≥ 23 por
+  ciclo. Las registradas antes NO cuentan como otra entrega; se agregan al Registro de la
+  entrega anterior como " [extra: dd/MM/yyyy D/código/lab; ...]". DIU, SIU, implante y AQV
+  solo tienen E1 (las repeticiones salen como extra en E1_Registro).
 - Fecha programada de la entrega k = fecha de la entrega k-1 + CEILING(cantidad de la
   entrega k-1 × días/unidad).
 - Validez de cada entrega: 0 = no tiene entrega; 1 = válido (inicio, o |fecha real −
-  programada| ≤ @tol_valida); 2 = observado (fuera de ± @tol_valida). Las observadas
+  programada| ≤ @tol_valida); 2 = observado (más de @tol_valida días después de la
+  programada). Las observadas
   TAMBIÉN cuentan como entregas para la meta y el avance.
 - Entregas que faltan: después de la última entrega real se proyectan las fechas
   programadas siguientes (última + n × CEILING(cantidad última × días/unidad)) hasta la meta
@@ -108,9 +115,13 @@ CASOS DE PRUEBA (resultado esperado; úsalos en pruebas unitarias o de integraci
 1. Trimestral 10/01/2025, 10/04/2025, 09/07/2025, 08/10/2025 (todas con 99208-TA):
    Estado COMPLETO, Entregas 4, Observadas 0, Avance 100;
    E2 programada 10/04 validez 1; E3 09/07 validez 1; E4 programada 07/10, real 08/10, validez 1.
-2. Trimestral 15/01/2025, 02/04/2025, 20/07/2025, 18/10/2025:
-   E2 programada 15/04, real 02/04 -> validez 2; E3 programada 01/07, real 20/07 -> validez 2;
-   E4 programada 18/10 -> validez 1. Entregas 4, Observadas 2, Estado COMPLETO.
+2. Condón 02/01/2025, 10/01, 01/02, 20/02, 05/03, 15/04:
+   E1_Registro "D/99208.02/ [extra: 10/01/2025 D/99208.02/]";
+   E2 programada 01/02 real 01/02 validez 1, Registro con [extra: 20/02/2025 ...];
+   E3 programada 03/03 real 05/03 validez 1; E4 programada 04/04 real 15/04 validez 2;
+   Entregas 4, Observadas 1, Próxima cita 15/05/2025.
+2b. Condón 01/10/2026 y 05/10/2026: Entregas 1, E1_Registro con [extra: 05/10/2026 ...],
+   E2 programada 31/10/2026 sin fecha real.
 3. Condón masculino una sola entrega el 02/01/2025:
    Estado ABANDONO, Avance 8, Próxima cita 01/02/2025, Días de atraso 334;
    E2..E12 programadas 01/02, 03/03, 02/04, 02/05, 01/06, 01/07, 31/07, 30/08, 29/09,

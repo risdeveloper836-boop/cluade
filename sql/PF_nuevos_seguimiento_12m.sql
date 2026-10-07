@@ -17,10 +17,12 @@
             INCOMPLETO                    (cerro los 12 meses sin abandono, pero bajo la meta)
   Validez : cada entrega tiene una fecha programada = entrega anterior + dias que protege lo
             entregado (trimestral 90 dias, mensual 28, oral 28 por ciclo, condon 30...). La entrega es
-            VALIDA si se hizo dentro de +/- 5 dias de esa fecha.
+            VALIDA si se hizo dentro de +/- 5 dias de esa fecha. La siguiente entrega se
+            busca desde (fecha programada - 5 dias): las entregas mas juntas no cuentan como
+            otra entrega y salen como [extra ...] en el Registro de la entrega anterior.
             Columna Ex_Validez:  0 = no tiene entrega
                                  1 = valido (inicio, o dentro de +/- 5 dias)
-                                 2 = observado (fuera de +/- 5 dias)
+                                 2 = observado (mas de 5 dias despues de la programada)
             Las observadas (2) tambien son entregas validas: cuentan para COMPLETO y
             el % de avance; el codigo 2 solo marca que fueron fuera de +/- 5 dias.
   Ultimo  : ultimo metodo recibido por la persona hasta la fecha de corte (cualquier metodo).
@@ -44,6 +46,7 @@ DECLARE @dias_seg    INT;
 DECLARE @edad_min    INT;
 DECLARE @edad_max    INT;
 DECLARE @tol_valida  INT;
+DECLARE @gracia_busqueda INT;
 
 SET @ini_cohorte = '20250101';                 /* primer inicio a considerar             */
 SET @fin_cohorte = '20261231';                 /* ultimo inicio a considerar             */
@@ -53,6 +56,7 @@ SET @dias_seg    = 365;                        /* duracion del seguimiento      
 SET @edad_min    = 15;
 SET @edad_max    = 49;
 SET @tol_valida  = 5;                          /* +/- dias para que la entrega sea VALIDA */
+SET @gracia_busqueda = 5;                      /* la siguiente entrega se busca desde la fecha programada menos estos dias */
 
 /*================================ CATALOGO DE METODOS =================================
   meta_anual    : unidades que dan 1 anio de proteccion (inyectable trimestral = 4 dosis).
@@ -196,25 +200,84 @@ WHERE num_doc IN (
 );
 
 /*=========================== 3. ENTREGAS DENTRO DE LOS 12 MESES ========================
-  mes_seg: mes de seguimiento (1 = primer mes desde el inicio ... 12 = ultimo mes)
+  Para no jalar entregas muy juntas, la siguiente entrega se busca desde la fecha
+  programada menos el periodo de gracia (@gracia_busqueda = 5 dias):
+     busqueda desde = entrega anterior + CEILING(cantidad x dias/unidad) - 5
+     (trimestral >= 85 dias, mensual >= 23, condon >= 25, oral >= 23 por ciclo)
+  Las entregas registradas antes de esa fecha NO cuentan como otra entrega: se muestran
+  como [extra ...] en el Registro de la entrega anterior.
+  Metodos de larga duracion y definitivos: solo cuentan el inicio (E1).
 =======================================================================================*/
+/* Para cada entrega, la siguiente entrega elegible del mismo metodo */
+IF OBJECT_ID('tempdb..#sig') IS NOT NULL DROP TABLE #sig;
+SELECT
+    x.num_doc,
+    x.metodo,
+    x.fecha,
+    nx.fecha AS fec_sig
+INTO #sig
+FROM #entrega AS x
+INNER JOIN #metodo_param AS p ON p.metodo = x.metodo
+OUTER APPLY (SELECT TOP 1 y.fecha
+             FROM #entrega AS y
+             WHERE y.num_doc = x.num_doc
+               AND y.metodo  = x.metodo
+               AND y.fecha   > x.fecha
+               AND y.fecha  >= DATEADD(DAY, CONVERT(INT, CEILING(x.cantidad * p.dias_x_unidad)) - @gracia_busqueda, x.fecha)
+             ORDER BY y.fecha) AS nx
+WHERE p.dias_x_unidad IS NOT NULL;
+
+CREATE CLUSTERED INDEX ix_sig ON #sig (num_doc, metodo, fecha);
+
+/* Cadena de entregas de cada episodio: inicio -> siguiente elegible -> ... */
+IF OBJECT_ID('tempdb..#cadena') IS NOT NULL DROP TABLE #cadena;
+WITH cad AS (
+    SELECT i.id_episodio, i.num_doc, i.metodo, i.fec_inicio AS fecha, 1 AS n_entrega, i.fec_fin_seg
+    FROM #inicio AS i
+    UNION ALL
+    SELECT c.id_episodio, c.num_doc, c.metodo, s.fec_sig, c.n_entrega + 1, c.fec_fin_seg
+    FROM cad AS c
+    INNER JOIN #sig AS s
+            ON s.num_doc = c.num_doc
+           AND s.metodo  = c.metodo
+           AND s.fecha   = c.fecha
+    WHERE s.fec_sig IS NOT NULL
+      AND s.fec_sig <= c.fec_fin_seg
+)
+SELECT id_episodio, num_doc, metodo, fecha, n_entrega, fec_fin_seg
+INTO #cadena
+FROM cad
+OPTION (MAXRECURSION 0);
+
 IF OBJECT_ID('tempdb..#seg0') IS NOT NULL DROP TABLE #seg0;
 SELECT
-    i.id_episodio,
-    e.fecha,
+    c.id_episodio,
+    c.fecha,
     e.cantidad,
     e.renaes,
-    e.registro,
-    DATEDIFF(DAY, i.fec_inicio, e.fecha) * 12 / @dias_seg + 1                  AS mes_seg,
-    ROW_NUMBER() OVER (PARTITION BY i.id_episodio ORDER BY e.fecha)             AS n_entrega,
-    LAG(e.fecha)    OVER (PARTITION BY i.id_episodio ORDER BY e.fecha)          AS fec_prev,
-    LAG(e.cantidad) OVER (PARTITION BY i.id_episodio ORDER BY e.fecha)          AS cant_prev
+    e.registro
+      + ISNULL(' [extra: '
+               + STUFF((SELECT '; ' + CONVERT(VARCHAR(10), z.fecha, 103) + ' ' + z.registro
+                        FROM #entrega AS z
+                        WHERE z.num_doc = c.num_doc
+                          AND z.metodo  = c.metodo
+                          AND z.fecha   > c.fecha
+                          AND z.fecha   < ISNULL(c2.fecha, DATEADD(DAY, 1, c.fec_fin_seg))
+                        ORDER BY z.fecha
+                        FOR XML PATH('')), 1, 2, '')
+               + ']', '')                                                       AS registro,
+    c.n_entrega,
+    LAG(c.fecha)    OVER (PARTITION BY c.id_episodio ORDER BY c.n_entrega)      AS fec_prev,
+    LAG(e.cantidad) OVER (PARTITION BY c.id_episodio ORDER BY c.n_entrega)      AS cant_prev
 INTO #seg0
-FROM #inicio AS i
+FROM #cadena AS c
 INNER JOIN #entrega AS e
-        ON e.num_doc = i.num_doc
-       AND e.metodo  = i.metodo
-       AND e.fecha BETWEEN i.fec_inicio AND i.fec_fin_seg;
+        ON e.num_doc = c.num_doc
+       AND e.metodo  = c.metodo
+       AND e.fecha   = c.fecha
+LEFT JOIN #cadena AS c2
+       ON c2.id_episodio = c.id_episodio
+      AND c2.n_entrega   = c.n_entrega + 1;
 
 /* Fecha programada y validez de cada entrega (+/- @tol_valida dias) */
 IF OBJECT_ID('tempdb..#seg') IS NOT NULL DROP TABLE #seg;
